@@ -1,0 +1,15 @@
+svg {
+	margin: 20px;
+}
+
+.vertice {
+	fill: #ccc;
+	stroke: #fff;
+	stroke-width: 2px;
+}
+
+.edge {
+	stroke: #777;
+	stroke-width: 2px;
+	fill: transparent;
+}
