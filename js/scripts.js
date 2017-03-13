@@ -1,10 +1,10 @@
-var zoom = d3.zoom();
-var svg = d3.select("svg");
-svg.call(d3.zoom()
-	.scaleExtent([1 / 2, 4]));
-
-	
-var tycoonGraph = new TycoonGraph(edges, vertices);
-tycoonGraph.draw(svg);
+var tycoonGraph = new TycoonGraph({
+	edges: edges, 
+	vertices: vertices,
+	parentId: "tycoon",
+	width: 1200,
+	height: 600 
+});
+tycoonGraph.draw();
 
 

@@ -1,15 +1,24 @@
-svg {
+.svgContainer {
+	display: inline-block;
 	margin: 20px;
-}
-
-.vertice {
-	fill: #ccc;
-	stroke: #fff;
-	stroke-width: 2px;
+	width: 700px;
+	height: 300px;
+	border: 2px solid grey; 
+	overflow: hidden;
 }
 
 .edge {
-	stroke: #777;
-	stroke-width: 2px;
+	stroke: #ccc;
 	fill: transparent;
+}
+
+.verticeMark {
+	fill: #ccc;
+	stroke: #5bb;
+}
+
+.verticeLabel {
+	font-size: 5px;
+	fill: #177;
+	z-index: 100;
 }
