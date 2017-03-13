@@ -15,12 +15,9 @@ function TycoonGraph(data) {
 	this.verticeRadius = 2;
 	this.verticeBorder = 1;
 
-	this.verticesTypes = {
-		DEADEND: 1,
-		SWITCH: 2,
-		PLATFORM: 3,
-		GATEWAY: 4
-	};
+	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
+	this.verticesTypesColors = ["darkslategray", "cyan", "brown", "blue"]
+	this.verticesTypesIds = {DEADEND: 1, SWITCH: 2, PLATFORM: 3, GATEWAY: 4};
 
 	var verticesSizes = this.verticesSizes = {
 		maxX: -Infinity, maxY: -Infinity,
@@ -45,12 +42,33 @@ function TycoonGraph(data) {
 		.attr("width",  this.width)
 		.attr("height", this.height)
 		.call(this.zoomListener);
-	this.svg.append("svg:defs")
+
+	this.svg.append("svg:defs").selectAll("marker")
+		.data(this.verticesTypes)
+	.enter().append("svg:marker")
+		.attr("id", String)
+		.attr("viewBox", "0 -5 10 10")
+		.attr("markerWidth", 6)
+		.attr("markerHeight", 6)
+		.attr("orient", "auto")
+	.append("svg:path")
+		.attr("d", function(d) {
+			switch (d) {
+				case ("GATEWAY"):
+					return "M0,-3L10,0L0,3";
+				case ("PLATFORM"):
+					return "M-20,-3L20,-3L20,3L-20,3";
+				case ("DEADEND"):
+					return "M0,-3L3,-3L3,3L0,3";
+				}
+		})
+		.attr("fill", function(d, i) {return me.verticesTypesColors[i];});
+	/*this.svg.append("svg:defs")
 		.text('<defs>\
 			<marker id="SWITCH" markerWidth="10" markerHeight="10" refX="0" refY="3" orient="auto" markerUnits="strokeWidth">\
 				<path d="M0,0 L0,6 L9,3 z" fill="#f00" />\
 			</marker>\
-		</defs>');
+		</defs>');*/
 	this.vis = this.svg.append("svg:g");
 	//me.zoomListener.translateBy(this.vis, this.margin.left + this.width/2, this.margin.top+this.height/2);
 }
@@ -73,14 +91,22 @@ TycoonGraph.prototype.draw = function(svg) {
 		.enter();
 
 	var graphEdgesStraight = graphEdges
-		.filter(function(d) { return typeof d.coords === "undefined"; })
+		.filter(function(d) { return typeof d.coords === 'undefined'; })
 		.append('line')
 			.attr('class', 'edge')
 			.attr('stroke-width', me.edgeWidth)
-			.attr("x1", function(d) { return vertices[d.source-1].x*scale })
-			.attr("y1", function(d) { return (verticesSizes.maxY - vertices[d.source-1].y)*scale })
-			.attr("x2", function(d) { return vertices[d.target-1].x*scale })
-			.attr("y2", function(d) { return (verticesSizes.maxY - vertices[d.target-1].y)*scale });
+			.attr('x1', function(d) { return vertices[d.source-1].x*scale })
+			.attr('y1', function(d) { return (verticesSizes.maxY - vertices[d.source-1].y)*scale })
+			.attr('x2', function(d) { return vertices[d.target-1].x*scale })
+			.attr('y2', function(d) { return (verticesSizes.maxY - vertices[d.target-1].y)*scale })
+			.attr('marker-end', function(d) {
+				var mkType = me.vertices[d.target-1].marker;
+				return (mkType != me.verticesTypesIds.SWITCH) ? ('url(#' + me.verticesTypes[mkType-1] + ')') : null;
+			})
+			.attr('marker-start', function(d) {
+				var mkType = me.vertices[d.source-1].marker;
+				return (mkType != me.verticesTypesIds.SWITCH) ? ('url(#' + me.verticesTypes[mkType-1] + ')') : null;
+			});
 
 	var edgeLine = d3.line()
 		.curve(d3.curveBasis)
@@ -90,34 +116,43 @@ TycoonGraph.prototype.draw = function(svg) {
 		.x(function(d) { return d.x*scale; })
 		.y(function(d) { return (verticesSizes.maxY - d.y)*scale; });
 	var graphEdgesByCoords = graphEdges
-		.filter(function(d) { return typeof d.coords != "undefined"; })
+		.filter(function(d) { return typeof d.coords != 'undefined'; })
 		.append('path')
 			.attr('class', 'edge')
 			.attr('stroke-width', me.edgeWidth)
+			.attr('marker-end', function(d) {
+				var mkType = me.vertices[d.target-1].marker;
+				return (mkType != me.verticesTypesIds.SWITCH) ? ('url(#' + me.verticesTypes[mkType-1] + ')') : null;
+			})
+			.attr('marker-start', function(d) {
+				var mkType = me.vertices[d.source-1].marker;
+				return (mkType != me.verticesTypesIds.SWITCH) ? ('url(#' + me.verticesTypes[mkType-1] + ')') : null;
+			})
 			.datum(function(d) {return d.coords;})
-			.attr("d", edgeLine);
+			.attr('d', edgeLine);
 
 	/* draw vertices */
-	var graphVertices = me.vis.selectAll(".vertice")
+	var graphVertices = me.vis.selectAll('.vertice')
 		.data(vertices)
 		.enter().append("svg:g")
-			.attr("class", "vertice")
-			.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSizes.maxY - d.y)*scale + ")"; });
+			.attr('class', 'vertice')
+			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSizes.maxY - d.y)*scale + ')'; });
 
 	graphVertices
-		.filter(function(d) { return d.coords != "undefined"; })
-		.append("circle")
+		.filter(function(d) { return d.marker === me.verticesTypesIds.SWITCH; })
+		.append('circle')
 			.attr('class', 'verticeMark')
-			.attr("cx", 0)
-			.attr("cy", 0)
+			.attr('cx', 0)
+			.attr('cy', 0)
 			.attr('stroke-width',  me.verticeBorder)
-			.attr("r", me.verticeRadius);
+			.attr('r', me.verticeRadius);
+
 	graphVertices.append("svg:text")
-			.attr("class", "verticeLabel")
-			.attr("x", function(d) {return me.verticeRadius*1.2;})
-			.attr("y", function(d) {return -me.verticeRadius;})
+			.attr('class', 'verticeLabel')
+			.attr('x', function(d) {return me.verticeRadius*1.2;})
+			.attr('y', function(d) {return -me.verticeRadius;})
 			.text(function(d) { return d.label;})
-			.style("fill-opacity", 1);
+			.style('fill-opacity', 1);
 }
 
 //Graph with adjacent list http://blog.benoitvallon.com/data-structures-in-javascript/the-graph-data-structure/
