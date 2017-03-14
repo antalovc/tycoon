@@ -12,9 +12,19 @@
 	fill: transparent;
 }
 
-.verticeMark {
+.path {
+	stroke: cornflowerblue;
+	fill: transparent;
+}
+
+.arrowMark {
 	fill: #ccc;
 	stroke: #5bb;
+}
+
+.platformMark {
+	fill: #ccc;
+	stroke: darkorange;
 }
 
 .verticeLabel {
