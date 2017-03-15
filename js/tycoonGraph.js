@@ -3,7 +3,10 @@ function TycoonGraph(data) {
 
 	this.edges      = data.edges;
 	this.vertices   = data.vertices;
-	this.path       = (data.path) ? data.path : [];
+	this.path       = (data.path) ? 
+		(Array.isArray(data.path) ? data.path : data.path.split(',')): 
+		[];
+	this
 	this.parentNode = d3.select('#' + data.parentId);
 
 	var sz = me.getSizes(data);
@@ -85,6 +88,7 @@ TycoonGraph.prototype.loadData = function() {
 					me.vertices = vertices;
 					me.prepareData();
 					me.draw();
+					me.setPath(me.path);
 				})
 		})
 }
@@ -107,10 +111,10 @@ TycoonGraph.prototype.prepareData = function() {
 }
 
 TycoonGraph.prototype.getSizes = function(data) {
-	var isWidthPc  = (data.width.slice(-1) === '%'),
-		isHeightPc = (data.height.slice(-1) === '%'),
-		resHeight = data.height, 
-		resWidth  = data.width;
+	var resHeight = data.height, 
+		resWidth  = data.width,
+		isWidthPc  = (typeof resWidth === 'string' && resWidth.slice(-1) === '%'),
+		isHeightPc = (typeof resHeight === 'string' && resHeight.slice(-1) === '%');
 
 	if (isWidthPc || isHeightPc) {
 		var node = document.getElementById(data.parentId),
@@ -292,6 +296,7 @@ TycoonGraph.prototype.convertVerticesArrayToEdgeArray = function(verticesArray) 
 }
 
 TycoonGraph.prototype.setPath = function(verticesArray) {
+	verticesArray = Array.isArray(verticesArray) ? verticesArray : verticesArray.split(',');
 	this.path = this.convertVerticesArrayToEdgeArray(verticesArray);
 	this.drawPath();
 }

@@ -1,3 +1,4 @@
+/*base element*/
 .svgContainer {
 	display: inline-block;
 	margin: 20px;
@@ -7,26 +8,31 @@
 	overflow: hidden;
 }
 
+/*graph edge*/
 .edge {
 	stroke: #ccc;
 	fill: transparent;
 }
 
+/*graph selected path*/
 .path {
 	stroke: cornflowerblue;
 	fill: transparent;
 }
 
+/*arrow colors*/
 .arrowMark {
 	fill: #ccc;
 	stroke: #5bb;
 }
 
+/*platform colors*/
 .platformMark {
 	fill: #ccc;
 	stroke: darkorange;
 }
 
+/*label colors*/
 .verticeLabel {
 	font-size: 5px;
 	fill: #177;
