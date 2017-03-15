@@ -1,8 +1,8 @@
 .svgContainer {
 	display: inline-block;
 	margin: 20px;
-	width: 700px;
-	height: 300px;
+	width: 1200px;
+	height: 600px;
 	border: 2px solid grey; 
 	overflow: hidden;
 }

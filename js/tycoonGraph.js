@@ -4,29 +4,98 @@ function TycoonGraph(data) {
 	this.edges      = data.edges;
 	this.vertices   = data.vertices;
 	this.path       = (data.path) ? data.path : [];
-	me.createAdjacencyList();
-
 	this.parentNode = d3.select('#' + data.parentId);
-	this.width      = data.width;
-	this.height     = data.height;
+
+	var sz = me.getSizes(data);
+	this.width      = sz.width;
+	this.height     = sz.height;
+
+	this.edgesFile  = data.edgesFile;
+	this.verticesFile = data.verticesFile;
+
 	this.margin     = {top: 20, right: 20, bottom: 20, left: 20};
 	this.viewWidth  = this.width  - this.margin.right - this.margin.left;
 	this.viewHeight = this.height - this.margin.top   - this.margin.bottom;
 
-	this.calibrateScale = 3.3;
+	this.calibrateScale = data.calibrateScale;
 	this.edgeWidth = 1;
-	this.pathWidth = 2;
+	this.pathWidth = 3;
 	this.verticeRadius = 2;
 	this.verticeBorder = 1;
+
+	this.hierarchyOrder = ["path", "edge", "vertice"];
+	this.hierarchyOrderIds = {
+		paths: 0, edges: 1, vertices: 2
+	};
 
 	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
 	this.verticesTypesColors = ["darkslategray", "cyan", "brown", "lightseagreen"]
 	this.verticesTypesIds = {DEADEND: 1, SWITCH: 2, PLATFORM: 3, GATEWAY: 4};
 
-	var verticesSizes = this.verticesSizes = {
+	// Define the zoom function for the zoomable tree
+	function zoom() {
+		me.vis.attr("transform", d3.event.transform);
+	}
+	// Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
+	this.zoomListener = d3.zoom().scaleExtent([0.01, 3]).on("zoom", zoom);
+
+	// Create svg canvas to draw in
+	this.svg = this.parentNode.append("svg:svg")
+		.attr("width",  this.width)
+		.attr("height", this.height)
+		.call(this.zoomListener);
+
+	// Append graph vertices markers into 'defs' section of svg
+	this.svg.append("svg:defs").selectAll("marker")
+		.data(this.verticesTypes)
+		.enter().append("svg:marker")
+			.attr("id", String)
+			.attr("viewBox", "0 -5 10 10")
+			.attr("markerWidth", 6)
+			.attr("markerHeight", 6)
+			.attr("orient", "auto")
+		.append("svg:path")
+			.attr("d", function(d) {
+				switch (d) {
+					case ("GATEWAY"):
+						return "M0,-3L10,0L0,3";
+					/*case ("PLATFORM"):
+						return "M-40,-3L40,-3L40,3L-40,3";*/
+					case ("DEADEND"):
+						return "M0,-3L3,-3L3,3L0,3";
+					}
+			})
+			.attr("fill", function(d, i) {return me.verticesTypesColors[i];});
+
+	this.vis = this.svg.append("svg:g");
+	this.loadData();
+}
+
+TycoonGraph.prototype.loadData = function() {
+	var me = this;
+	d3.json(me.edgesFile,
+		function(error, edges) {
+			if (error) return console.warn("Failed load edges file at " + 
+				me.edgesFile + ':\n' + error);
+			me.edges = edges;
+			d3.json(me.verticesFile,
+				function(error, vertices) {
+					if (error) return console.warn("Failed load vertices file at " + 
+						me.verticesFile + ':\n' + error);
+					me.vertices = vertices;
+					me.prepareData();
+					me.draw();
+				})
+		})
+}
+
+TycoonGraph.prototype.prepareData = function() {
+	var me = this;
+	var verticesSizes = me.verticesSizes = {
 		maxX: -Infinity, maxY: -Infinity,
 		minX: Infinity,  minY: Infinity
 	}
+
 	this.vertices.forEach(function (vt) {
 		if (verticesSizes.maxX < vt.x) verticesSizes.maxX = vt.x;
 		if (verticesSizes.maxY < vt.y) verticesSizes.maxY = vt.y;
@@ -34,42 +103,28 @@ function TycoonGraph(data) {
 		if (verticesSizes.minY > vt.y) verticesSizes.minY = vt.y;
 	});
 
-	// Define the zoom function for the zoomable tree
-	function zoom() {
-		me.vis.attr("transform", d3.event.transform);
+	me.createAdjacencyList();
+}
+
+TycoonGraph.prototype.getSizes = function(data) {
+	var isWidthPc  = (data.width.slice(-1) === '%'),
+		isHeightPc = (data.height.slice(-1) === '%'),
+		resHeight = data.height, 
+		resWidth  = data.width;
+
+	if (isWidthPc || isHeightPc) {
+		var node = document.getElementById(data.parentId),
+			style = getComputedStyle(node, null),
+			sz = node.getBoundingClientRect();
+			resHeight = (sz.height - parseInt(style.getPropertyValue('border-top-width')) 
+				- parseInt(style.getPropertyValue('border-bottom-width')))
+				* parseInt(resHeight) / 100;
+			resWidth = (sz.width - parseInt(style.getPropertyValue('border-left-width')) 
+				- parseInt(style.getPropertyValue('border-right-width')))
+				* parseInt(resWidth) / 100;
 	}
-	
-	// define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
-	this.zoomListener = d3.zoom().scaleExtent([0.01, 3]).on("zoom", zoom);
 
-	this.svg = this.parentNode.append("svg:svg")
-		.attr("width",  this.width)
-		.attr("height", this.height)
-		.call(this.zoomListener);
-
-	this.svg.append("svg:defs").selectAll("marker")
-		.data(this.verticesTypes)
-	.enter().append("svg:marker")
-		.attr("id", String)
-		.attr("viewBox", "0 -5 10 10")
-		.attr("markerWidth", 6)
-		.attr("markerHeight", 6)
-		.attr("orient", "auto")
-	.append("svg:path")
-		.attr("d", function(d) {
-			switch (d) {
-				case ("GATEWAY"):
-					return "M0,-3L10,0L0,3";
-				/*case ("PLATFORM"):
-					return "M-40,-3L40,-3L40,3L-40,3";*/
-				case ("DEADEND"):
-					return "M0,-3L3,-3L3,3L0,3";
-				}
-		})
-		.attr("fill", function(d, i) {return me.verticesTypesColors[i];});
-
-	this.vis = this.svg.append("svg:g");
-	//me.zoomListener.translateBy(this.vis, this.margin.left + this.width/2, this.margin.top+this.height/2);
+	return {width: resWidth, height: resHeight};
 }
 
 TycoonGraph.prototype.createAdjacencyList = function() {
@@ -83,10 +138,19 @@ TycoonGraph.prototype.createAdjacencyList = function() {
 	});
 }
 
+TycoonGraph.prototype.getSvgGroupByClass = function(className) {
+	return this.vis.select('#' + className + 's');
+}
+
 TycoonGraph.prototype.draw = function() {
 	var me = this,
 		edges = me.edges,
 		vertices = me.vertices;
+
+	/*prepare hierarchy (order of drawing)*/
+	me.hierarchyOrder.forEach(function(id) {
+		me.vis.append("g").attr("id", id + "s");
+	});
 
 	/* get graph scale */
 	var verticesSizes = me.verticesSizes;
@@ -100,8 +164,7 @@ TycoonGraph.prototype.draw = function() {
 		-me.height*(me.calibrateScale-1)/2 + me.margin.top*me.calibrateScale);
 	me.zoomListener.scaleTo(me.svg, 1/me.calibrateScale);
 
-	me.setPath([]);
-	me.drawEdges(me.edges, 'edge', me.edgeWidth);
+	me.drawEdges(me.edges, me.hierarchyOrder[me.hierarchyOrderIds.edges], me.edgeWidth);
 	me.drawVertices();
 }
 
@@ -113,6 +176,8 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		scale = me.scale,
 		verticesSizes = me.verticesSizes;
 
+	var svgG = me.getSvgGroupByClass(className);
+
 	/* function to draw curve edges by given coordinates */
 	var edgeLine = d3.line()
 		.curve(d3.curveBasis)
@@ -123,7 +188,7 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		.y(function(d) { return (verticesSizes.maxY - d.y)*scale; });
 
 	/* prepare to draw edges */
-	var graphEdges = me.vis.selectAll('.' + className)
+	var graphEdges = svgG.selectAll('.' + className)
 		.data(edges);
 	var graphEdgesEnter = graphEdges.enter()/*,
 		graphEdgesUpdate = graphEdges.update();
@@ -138,7 +203,8 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 	/* update coordinates edges */
 	graphEdges
 		.filter(function(d) { return typeof d.coords != 'undefined'; })
-			.attr('stroke-width', strokeWidth);
+		.datum(function(d) {return d.coords;})
+			.attr('d', edgeLine)
 	/* draw new straight edges */
 	graphEdgesEnter
 		.filter(function(d) { return typeof d.coords === 'undefined'; })
@@ -172,11 +238,14 @@ TycoonGraph.prototype.drawVertices = function () {
 		scale = me.scale,
 		verticesSizes = me.verticesSizes;
 
+	var className = me.hierarchyOrder[me.hierarchyOrderIds.vertices];
+	var svgG = me.getSvgGroupByClass(className);
+
 	/* prepare to draw vertices */
-	var graphVertices = me.vis.selectAll('.vertice')
+	var graphVertices = me.vis.selectAll('.' + className)
 		.data(vertices)
 		.enter().append("svg:g")
-			.attr('class', 'vertice')
+			.attr('class', className)
 			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSizes.maxY - d.y)*scale + ')'; });
 
 	/* draw circles for ARROW vertices*/
@@ -229,7 +298,7 @@ TycoonGraph.prototype.setPath = function(verticesArray) {
 
 TycoonGraph.prototype.drawPath = function() {
 	var me = this;
-	me.drawEdges(me.path, 'path', me.pathWidth, false);
+	me.drawEdges(me.path, me.hierarchyOrder[me.hierarchyOrderIds.paths], me.pathWidth, false);
 }
 
 TycoonGraph.prototype.getMarkerDst = function(d) {

@@ -1,10 +1,10 @@
 var tycoonGraph = new TycoonGraph({
-	edges: edges, 
-	vertices: vertices,
-	parentId: "tycoon",
-	width: 700,
-	height: 300 
+	parentId: 'tycoon',
+	width: '100%',
+	height: '100%',
+	calibrateScale: 2,
+	edgesFile: './data/edges.json',
+	verticesFile: './data/vertices.json'
 });
-tycoonGraph.draw();
 
 
