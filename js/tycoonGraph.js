@@ -8,7 +8,7 @@ function TycoonGraph(data) {
 	this.path = {
 		raw: data.path,
 		edges: [],
-		coordinates: [],
+		vertices: [],
 		maxX: -Infinity,
 		maxY: -Infinity,
 		minX: Infinity,
@@ -33,9 +33,9 @@ function TycoonGraph(data) {
 	this.verticeBorder = 1;
 	this.zoomDuration  = 1000;
 
-	this.hierarchyOrder = ["path", "edge", "vertice"];
+	this.hierarchyOrder = ["path", "edge", "vertice", "pathLabel"];
 	this.hierarchyOrderIds = {
-		paths: 0, edges: 1, vertices: 2
+		paths: 0, edges: 1, vertices: 2, pathLabel: 3
 	};
 
 	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
@@ -252,7 +252,7 @@ TycoonGraph.prototype.drawVertices = function () {
 	var svgG = me.getSvgGroupByClass(className);
 
 	/* prepare to draw vertices */
-	var graphVertices = me.vis.selectAll('.' + className)
+	var graphVertices = me.graphVertices = me.vis.selectAll('.' + className)
 		.data(vertices)
 		.enter().append("svg:g")
 			.attr('class', className)
@@ -281,23 +281,71 @@ TycoonGraph.prototype.drawVertices = function () {
 			.attr('r', me.verticeRadius);
 
 	/* draw text labels */
-	graphVertices.append("svg:text")
+	//me.drawLabels();
+}
+
+TycoonGraph.prototype.drawLabels = function() {
+	var me = this,
+		scale = me.scale,
+		verticesSize = me.verticesSize,
+		outerVertices = [];
+	var pathVertices = me.path.vertices;
+	if (pathVertices.length) {
+		outerVertices.push(pathVertices[0]); 
+		outerVertices.push(pathVertices[pathVertices.length-1]);
+	}
+
+	var isUsualLabel = function(d) {
+		return !outerVertices.length || d.id != outerVertices[0].id && d.id != outerVertices[1].id;
+	};
+	
+	// draw usual vertices
+	var graphLabelVertices = me.graphVertices;
+	graphLabelVertices.select("text").remove();
+	graphLabelVertices
+		.filter(function(d) {return isUsualLabel(d);})
+		.append("svg:text")
 			.attr('class', 'verticeLabel')
 			.attr('x', function(d) {return me.verticeRadius*1.7;})
 			.attr('y', function(d) {return -me.verticeRadius*0.2;})
 			.text(function(d) { return d.label;})
 			.style('fill-opacity', 1);
+	/*graphLabelVertices
+		.filter(function(d) {return !isUsualLabel(d);})
+		.select("text").remove();*/
+
+	// draw path first and last vertices
+	var className = me.hierarchyOrder[me.hierarchyOrderIds.pathLabel];
+	var pathLabelVertices = me.vis.selectAll('.' + className)
+		.data(outerVertices);
+	pathLabelVertices/* update */
+		.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
+		.select("text")
+			.text(function(d) { return d.label;})
+	pathLabelVertices/* enter */
+		.enter().append("svg:g")
+			.attr('class', className)
+			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
+		.append("svg:text")
+			.attr('class', 'pathVerticeLabel')
+			.attr('x', function(d) {return me.verticeRadius*1.7;})
+			.attr('y', function(d) {return -me.verticeRadius*0.2;})
+			.text(function(d) { return d.label;})
+			.style('fill-opacity', 1);
+	pathLabelVertices.exit().remove();/* remove */
 }
 
 TycoonGraph.prototype.parepareVerticesRawData = function(verticesArray) {
 	var me = this, edge,
 		res = {
 			edges: [],
+			vertices: [],
 			minX: Infinity,  minY: Infinity,
 			maxX: -Infinity, maxY: -Infinity
 		};
 	for (var i = 0; i < verticesArray.length; i++) {
 		var vertice = me.vertices[verticesArray[i]-1];
+		res.vertices.push(vertice);
 		if (res.maxX < vertice.x) res.maxX = vertice.x;
 		if (res.maxY < vertice.y) res.maxY = vertice.y;
 		if (res.minX > vertice.x) res.minX = vertice.x;
@@ -320,9 +368,12 @@ TycoonGraph.prototype.setPath = function(verticesRaw) {
 
 	me.path.raw   = verticesRaw;
 	me.path.edges = preparedData.edges;
+	me.path.vertices = preparedData.vertices;
 	me.path.minX  = preparedData.minX; me.path.maxX = preparedData.maxX;
 	me.path.minY  = preparedData.minY; me.path.maxY = preparedData.maxY;
 	me.drawEdges(me.path.edges, me.hierarchyOrder[me.hierarchyOrderIds.paths], me.pathWidth, false);
+	me.drawLabels();
+
 	me.zoomTo(me.path, me.zoomDuration);
 }
 
@@ -340,7 +391,7 @@ TycoonGraph.prototype.zoomTo = function(region, duration) {
 	tycoonGraph.svg.call(tycoonGraph.zoomListener.transform, 
 		d3.zoomIdentity
 			.translate( 
-				me.margin.left - region.minX*me.scale*zoomScale, 
+				me.margin.left - region.minX*me.scale*zoomScale  + (me.viewWidth - (region.maxX - region.minX)*me.scale*zoomScale)/2,
 				me.margin.top  - (me.verticesSize.maxY - region.maxY)*me.scale*zoomScale + (me.viewHeight - (region.maxY - region.minY)*me.scale*zoomScale)/2
 			)
 			.scale(zoomScale)

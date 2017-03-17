@@ -39,5 +39,12 @@
 .verticeLabel {
 	font-size: 5px;
 	fill: #177;
-	z-index: 100;
+}
+
+/*path label colors*/
+.pathVerticeLabel {
+	font-size: 7px;
+	font-weight: bold;
+	fill: midnightblue;
+	text-decoration: underline;
 }
