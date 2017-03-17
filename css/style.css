@@ -11,6 +11,19 @@
 	overflow: hidden;
 }
 
+.legendContainer {
+	z-index: 10;
+	position: absolute;
+	bottom: 20px;
+	right: 20px;
+
+	display: block;
+	width: 300px;
+	height: 200px;
+
+	background-color: #eee;
+}
+
 /*graph edge*/
 .edge {
 	stroke: #ccc;

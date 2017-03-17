@@ -2,6 +2,7 @@ function TycoonGraph(data) {
 	var me = this;
 
 	this.parentNode = d3.select('#' + data.parentId);
+	this.legendId   = data.legendId;
 
 	this.edges      = data.edges;
 	this.vertices   = data.vertices;
@@ -18,11 +19,12 @@ function TycoonGraph(data) {
 	var sz = me.getSizes(data);
 	this.width      = sz.width;
 	this.height     = sz.height;
+	this.zoom       = (typeof data.zoom != 'undefined') ? data.zoom : true;
 
 	this.edgesFile  = data.edgesFile;
 	this.verticesFile = data.verticesFile;
 
-	this.margin     = {top: 50, right: 50, bottom: 50, left: 50};
+	this.margin     = (data.margin) ? data.margin : {top: 50, right: 50, bottom: 50, left: 50};
 	this.viewWidth  = this.width  - this.margin.right - this.margin.left;
 	this.viewHeight = this.height - this.margin.top   - this.margin.bottom;
 
@@ -42,6 +44,9 @@ function TycoonGraph(data) {
 	this.verticesTypesColors = ["darkslategray", "cyan", "brown", "lightseagreen"]
 	this.verticesTypesIds = {DEADEND: 1, SWITCH: 2, PLATFORM: 3, GATEWAY: 4};
 
+	// Create svg canvas for legend
+	this.drawLegend();
+
 	// Define the zoom function for the zoomable tree
 	function zoom() {
 		var duration = 0;
@@ -52,7 +57,7 @@ function TycoonGraph(data) {
 	this.zoomListener = d3.zoom().scaleExtent([0.001, 1000]).on("zoom", zoom);
 
 	// Create svg canvas to draw in
-	this.svg = this.parentNode.append("svg:svg")
+	this.svg = this.parentNode.insert("svg:svg",":first-child")
 		.attr("width",  this.width)
 		.attr("height", this.height)
 		.call(this.zoomListener);
@@ -153,6 +158,22 @@ TycoonGraph.prototype.createAdjacencyList = function() {
 
 TycoonGraph.prototype.getSvgGroupByClass = function(className) {
 	return this.vis.select('#' + className + 's');
+}
+
+TycoonGraph.prototype.drawLegend = function() {
+	var me = this;
+	if (!me.legendId) return;
+	var legendGraph = new TycoonGraph({
+		parentId: me.legendId,
+		width: '100%',
+		height: '100%',
+		calibrateScale: 0.2,
+		edgesFile:     './data/legendEdges.json',
+		verticesFile:  './data/legendVertices.json',
+		zoom: false,
+		margin: {top: 50, right: 100, bottom: 50, left: 100}
+	});
+	
 }
 
 TycoonGraph.prototype.draw = function() {
@@ -281,7 +302,7 @@ TycoonGraph.prototype.drawVertices = function () {
 			.attr('r', me.verticeRadius);
 
 	/* draw text labels */
-	//me.drawLabels();
+	me.drawLabels();
 }
 
 TycoonGraph.prototype.drawLabels = function() {
@@ -374,10 +395,10 @@ TycoonGraph.prototype.setPath = function(verticesRaw) {
 	me.drawEdges(me.path.edges, me.hierarchyOrder[me.hierarchyOrderIds.paths], me.pathWidth, false);
 	me.drawLabels();
 
-	me.zoomTo(me.path, me.zoomDuration);
+	me.zoomTo(me.path);
 }
 
-TycoonGraph.prototype.zoomTo = function(region, duration) {
+TycoonGraph.prototype.zoomTo = function(region) {
 	var me = this;
 
 	if (typeof duration === 'undefined') duration = 0;
@@ -388,7 +409,7 @@ TycoonGraph.prototype.zoomTo = function(region, duration) {
 	var zoomScale = ((scaleX > scaleY) ? scaleY : scaleX)/me.scale;
 	if (zoomScale === Infinity) zoomScale = 1;
 
-	tycoonGraph.svg.call(tycoonGraph.zoomListener.transform, 
+	me.svg.call(me.zoomListener.transform, 
 		d3.zoomIdentity
 			.translate( 
 				me.margin.left - region.minX*me.scale*zoomScale  + (me.viewWidth - (region.maxX - region.minX)*me.scale*zoomScale)/2,
