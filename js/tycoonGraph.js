@@ -1,13 +1,13 @@
-function TycoonGraph(data) {
+function TycoonGraph(config) {
 	var me = this;
 
-	this.parentNode = d3.select('#' + data.parentId);
-	this.legendId   = data.legendId;
+	this.parentNode = d3.select('#' + config.parentId);
+	this.legendId   = config.legendId;
 
-	this.edges      = data.edges;
-	this.vertices   = data.vertices;
+	this.edges      = config.edges;
+	this.vertices   = config.vertices;
 	this.path = {
-		raw: data.path,
+		raw: config.path,
 		edges: [],
 		vertices: [],
 		maxX: -Infinity,
@@ -16,23 +16,28 @@ function TycoonGraph(data) {
 		minY: Infinity
 	};
 
-	var sz = me.getSizes(data);
+	var sz = me.getSizes(config);
 	this.width      = sz.width;
 	this.height     = sz.height;
-	this.zoom       = (typeof data.zoom != 'undefined') ? data.zoom : true;
+	this.zoom       = (typeof config.zoom != 'undefined') ? config.zoom : true;
 
-	this.edgesFile  = data.edgesFile;
-	this.verticesFile = data.verticesFile;
+	this.edgesFile  = config.edgesFile;
+	this.verticesFile = config.verticesFile;
 
-	this.margin     = (data.margin) ? data.margin : {top: 50, right: 50, bottom: 50, left: 50};
+	this.margin     = (config.margin) ? config.margin : {top: 50, right: 50, bottom: 50, left: 50};
 	this.viewWidth  = this.width  - this.margin.right - this.margin.left;
 	this.viewHeight = this.height - this.margin.top   - this.margin.bottom;
 
-	this.calibrateScale = data.calibrateScale;
+	this.calibrateScale = config.calibrateScale;
+	/* set default svg visuals, can be changed by addition of '' parameter to config*/
 	this.edgeWidth = 1;
 	this.pathWidth = 3;
 	this.verticeRadius = 2;
 	this.verticeBorder = 1;
+	this.platformWidthFactor  = 3;
+	this.platformHeightFactor = 2;
+	this.labelXFactor = 1.9;
+	this.labelYFactor = 0.2;
 	this.zoomDuration  = 1000;
 
 	this.hierarchyOrder = ["path", "edge", "vertice", "pathLabel"];
@@ -124,14 +129,14 @@ TycoonGraph.prototype.prepareData = function() {
 	me.createAdjacencyList();
 }
 
-TycoonGraph.prototype.getSizes = function(data) {
-	var resHeight = data.height, 
-		resWidth  = data.width,
+TycoonGraph.prototype.getSizes = function(config) {
+	var resHeight = config.height, 
+		resWidth  = config.width,
 		isWidthPc  = (typeof resWidth === 'string' && resWidth.slice(-1) === '%'),
 		isHeightPc = (typeof resHeight === 'string' && resHeight.slice(-1) === '%');
 
 	if (isWidthPc || isHeightPc) {
-		var node = document.getElementById(data.parentId),
+		var node = document.getElementById(config.parentId),
 			style = getComputedStyle(node, null),
 			sz = node.getBoundingClientRect();
 			resHeight = (sz.height - parseInt(style.getPropertyValue('border-top-width')) 
@@ -171,7 +176,7 @@ TycoonGraph.prototype.drawLegend = function() {
 		edgesFile:     './data/legendEdges.json',
 		verticesFile:  './data/legendVertices.json',
 		zoom: false,
-		margin: {top: 50, right: 100, bottom: 50, left: 100}
+		margin: {top: 50, right: 130, bottom: 40, left: 5}
 	});
 	
 }
@@ -290,14 +295,18 @@ TycoonGraph.prototype.drawVertices = function () {
 			.attr('r', me.verticeRadius);
 
 	/* draw squares for PLATFORM vertices*/
+	var x = -me.verticeRadius*me.platformWidthFactor/2,
+		y = -me.verticeRadius*me.platformHeightFactor/2,
+		w = me.verticeRadius*me.platformWidthFactor,
+		h = me.verticeRadius*me.platformHeightFactor;
 	graphVertices
 		.filter(function(d) { return d.marker === me.verticesTypesIds.PLATFORM; })
 		.append('rect')
 			.attr('class', 'platformMark')
-			.attr('x', -me.verticeRadius*1.5)
-			.attr('y', -me.verticeRadius*1)
-			.attr('width', me.verticeRadius*3)
-			.attr('height', me.verticeRadius*2)
+			.attr('x', x)
+			.attr('y', y)
+			.attr('width', w)
+			.attr('height', h)
 			.attr('stroke-width',  me.verticeBorder)
 			.attr('r', me.verticeRadius);
 
@@ -321,19 +330,18 @@ TycoonGraph.prototype.drawLabels = function() {
 	};
 	
 	// draw usual vertices
+	var x = me.verticeRadius*me.labelXFactor,
+		y = -me.verticeRadius*me.labelYFactor;
 	var graphLabelVertices = me.graphVertices;
 	graphLabelVertices.select("text").remove();
 	graphLabelVertices
 		.filter(function(d) {return isUsualLabel(d);})
 		.append("svg:text")
 			.attr('class', 'verticeLabel')
-			.attr('x', function(d) {return me.verticeRadius*1.7;})
-			.attr('y', function(d) {return -me.verticeRadius*0.2;})
+			.attr('x', x)
+			.attr('y', y)
 			.text(function(d) { return d.label;})
 			.style('fill-opacity', 1);
-	/*graphLabelVertices
-		.filter(function(d) {return !isUsualLabel(d);})
-		.select("text").remove();*/
 
 	// draw path first and last vertices
 	var className = me.hierarchyOrder[me.hierarchyOrderIds.pathLabel];
@@ -349,8 +357,8 @@ TycoonGraph.prototype.drawLabels = function() {
 			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
 		.append("svg:text")
 			.attr('class', 'pathVerticeLabel')
-			.attr('x', function(d) {return me.verticeRadius*1.7;})
-			.attr('y', function(d) {return -me.verticeRadius*0.2;})
+			.attr('x', x)
+			.attr('y', y)
 			.text(function(d) { return d.label;})
 			.style('fill-opacity', 1);
 	pathLabelVertices.exit().remove();/* remove */
