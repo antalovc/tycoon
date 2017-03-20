@@ -1,11 +1,34 @@
 function TycoonGraph(config) {
 	var me = this;
+	me.loadConfig(config);
+}
 
-	this.parentNode = d3.select('#' + config.parentId);
-	this.legendId   = config.legendId;
+TycoonGraph.prototype.loadConfig = function(config) {
+	/* load config */
+	var me = this;
+	if (config.configFile) {
+		d3.json(config.configFile,
+				function(error, configContents) {
+					if (error) return console.warn("Failed load vertices file at " + 
+						config.configFile + ':\n' + error);
+					me.initConfig(me.mergeObjs(config, configContents));
+				})
+	}
+	else
+		me.initConfig(config);
+}
 
-	this.edges      = config.edges;
-	this.vertices   = config.vertices;
+TycoonGraph.prototype.initConfig = function(config) {
+	/* ---init unloadable config--- */
+	this.hierarchyOrder = ["path", "edge", "vertice", "pathLabel"];
+	this.hierarchyOrderIds = {
+		paths: 0, edges: 1, vertices: 2, pathLabel: 3
+	};
+
+	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
+	this.verticesTypesColors = ["darkslategray", "cyan", "brown", "lightseagreen"]
+	this.verticesTypesIds = {DEADEND: 1, SWITCH: 2, PLATFORM: 3, GATEWAY: 4};
+
 	this.path = {
 		raw: config.path,
 		edges: [],
@@ -16,38 +39,46 @@ function TycoonGraph(config) {
 		minY: Infinity
 	};
 
-	var sz = me.getSizes(config);
+	/* ---init loadable config--- */
+
+	//defaults
+	this.width                = '100%';
+	this.height               = '100%';
+	this.edgeWidth            = 1;
+	this.pathWidth            = 3;
+	this.verticeRadius        = 2;
+	this.verticeBorder        = 1;
+	this.platformWidthFactor  = 3;
+	this.platformHeightFactor = 2;
+	this.labelXFactor         = 1.9;
+	this.labelYFactor         = 0.2;
+	this.zoomDuration         = 1000;
+	this.margin               = {top: 50, right: 50, bottom: 50, left: 50};
+
+	this.mergeObjs(this, config);
+
+	/* mandatory config params: */
+	// ["parentId", "width", "height", "edgesFile", "verticesFile", "calibrateScale"]
+	this.parentNode = d3.select('#' + config.parentId);
+	this.legendId   = config.legendId;
+
+	var sz = this.getSizes(config);
 	this.width      = sz.width;
 	this.height     = sz.height;
-	this.zoom       = (typeof config.zoom != 'undefined') ? config.zoom : true;
 
-	this.edgesFile  = config.edgesFile;
+	this.edgesFile    = config.edgesFile;
 	this.verticesFile = config.verticesFile;
+	
+	this.calibrateScale = config.calibrateScale;
 
-	this.margin     = (config.margin) ? config.margin : {top: 50, right: 50, bottom: 50, left: 50};
 	this.viewWidth  = this.width  - this.margin.right - this.margin.left;
 	this.viewHeight = this.height - this.margin.top   - this.margin.bottom;
 
-	this.calibrateScale = config.calibrateScale;
-	/* set default svg visuals, can be changed by addition of '' parameter to config*/
-	this.edgeWidth = 1;
-	this.pathWidth = 3;
-	this.verticeRadius = 2;
-	this.verticeBorder = 1;
-	this.platformWidthFactor  = 3;
-	this.platformHeightFactor = 2;
-	this.labelXFactor = 1.9;
-	this.labelYFactor = 0.2;
-	this.zoomDuration  = 1000;
+	this.initVisuals();
+}
 
-	this.hierarchyOrder = ["path", "edge", "vertice", "pathLabel"];
-	this.hierarchyOrderIds = {
-		paths: 0, edges: 1, vertices: 2, pathLabel: 3
-	};
-
-	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
-	this.verticesTypesColors = ["darkslategray", "cyan", "brown", "lightseagreen"]
-	this.verticesTypesIds = {DEADEND: 1, SWITCH: 2, PLATFORM: 3, GATEWAY: 4};
+TycoonGraph.prototype.initVisuals = function() {
+	var me = this;
 
 	// Create svg canvas for legend
 	this.drawLegend();
@@ -169,14 +200,10 @@ TycoonGraph.prototype.drawLegend = function() {
 	var me = this;
 	if (!me.legendId) return;
 	var legendGraph = new TycoonGraph({
-		parentId: me.legendId,
-		width: '100%',
-		height: '100%',
-		calibrateScale: 0.2,
-		edgesFile:     './data/legendEdges.json',
-		verticesFile:  './data/legendVertices.json',
-		zoom: false,
-		margin: {top: 50, right: 130, bottom: 40, left: 5}
+		parentId:     me.legendId,
+		configFile:   me.configLegendFile,
+		edgesFile:    './data/legendEdges.json',
+		verticesFile: './data/legendVertices.json'
 	});
 	
 }
@@ -435,6 +462,11 @@ TycoonGraph.prototype.getMarkerDst = function(d) {
 TycoonGraph.prototype.getMarkerSrc = function(d) {
 	var mkType = this.vertices[d.source-1].marker;
 	return (mkType != this.verticesTypesIds.SWITCH) ? ('url(#' + this.verticesTypes[mkType-1] + ')') : null;
+};
+
+TycoonGraph.prototype.mergeObjs = function(dst, src) {
+	for (var attrname in src) { if (src.hasOwnProperty(attrname)) dst[attrname] = src[attrname]; }
+	return dst;
 };
 
 //Graph with adjacent list http://blog.benoitvallon.com/data-structures-in-javascript/the-graph-data-structure/
