@@ -50,13 +50,13 @@
 
 /*label colors*/
 .verticeLabel {
-	font-size: 5px;
+	/*font-size: 5px; moved to config*/
 	fill: #177;
 }
 
 /*path label colors*/
 .pathVerticeLabel {
-	font-size: 7px;
+	/*font-size: 7px; moved to config*/
 	font-weight: bold;
 	fill: midnightblue;
 	text-decoration: underline;

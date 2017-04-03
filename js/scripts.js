@@ -11,8 +11,8 @@ function getParameterByName(name, url) {
 }
 
 var tycoonGraph = new TycoonGraph({
-	configFile: './data/config.json',
-	configLegendFile: './data/configLegend.json',
+	configFile: './config/config.json',
+	configLegendFile: './config/configLegend.json',
 	calibrateScale: getParameterByName('calibrateScale'),
 	edgesFile:  getParameterByName('edges'),
 	verticesFile:  getParameterByName('vertices'),
