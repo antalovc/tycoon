@@ -9,7 +9,7 @@ TycoonGraph.prototype.loadConfig = function(config) {
 	if (config.configFile) {
 		d3.json(config.configFile,
 				function(error, configContents) {
-					if (error) return console.warn("Failed load vertices file at " + 
+					if (error) return console.warn("Failed load graph config file at " + 
 						config.configFile + ':\n' + error);
 					me.initConfig(me.mergeObjs(config, configContents));
 				})
@@ -39,6 +39,9 @@ TycoonGraph.prototype.initConfig = function(config) {
 		minY: Infinity
 	};
 
+	this.store = config.store;
+	if (!this.store) console.warn('Tycoon graph: no data store provided');
+
 	/* ---init loadable config--- */
 
 	//defaults
@@ -67,9 +70,6 @@ TycoonGraph.prototype.initConfig = function(config) {
 	var sz = this.getSizes(config);
 	this.width      = sz.width;
 	this.height     = sz.height;
-
-	this.edgesFile    = config.edgesFile;
-	this.verticesFile = config.verticesFile;
 	
 	this.calibrateScale = config.calibrateScale;
 
@@ -128,36 +128,17 @@ TycoonGraph.prototype.initVisuals = function() {
 
 TycoonGraph.prototype.loadData = function() {
 	var me = this;
-	d3.json(me.edgesFile,
-		function(error, edges) {
-			if (error) return console.warn("Failed load edges file at " + 
-				me.edgesFile + ':\n' + error);
-			me.edges = edges;
-			d3.json(me.verticesFile,
-				function(error, vertices) {
-					if (error) return console.warn("Failed load vertices file at " + 
-						me.verticesFile + ':\n' + error);
-					me.vertices = vertices;
-					me.prepareData();
-					me.draw();
-					me.setPath(me.pathObj.raw);
-				})
-		})
+
+	me.edges    = me.store.getEdges();
+	me.vertices = me.store.getVertices();
+	me.prepareData();
+	me.draw();
+	me.setPath(me.pathObj.raw);
 }
 
 TycoonGraph.prototype.prepareData = function() {
 	var me = this;
-	var verticesSize = me.verticesSize = {
-		maxX: -Infinity, maxY: -Infinity,
-		minX: Infinity,  minY: Infinity
-	}
-
-	this.vertices.forEach(function (vt) {
-		if (verticesSize.maxX < vt.x) verticesSize.maxX = vt.x;
-		if (verticesSize.maxY < vt.y) verticesSize.maxY = vt.y;
-		if (verticesSize.minX > vt.x) verticesSize.minX = vt.x;
-		if (verticesSize.minY > vt.y) verticesSize.minY = vt.y;
-	});
+	me.verticesSize = me.store.getVerticesSize();
 
 	me.createAdjacencyList();
 }
@@ -201,11 +182,17 @@ TycoonGraph.prototype.getSvgGroupByClass = function(className) {
 TycoonGraph.prototype.drawLegend = function() {
 	var me = this;
 	if (!me.legendId) return;
-	var legendGraph = new TycoonGraph({
-		parentId:     me.legendId,
-		configFile:   me.configLegendFile,
+
+	var legendStore = new TycoonStore({
 		edgesFile:    './data/legendEdges.json',
-		verticesFile: './data/legendVertices.json'
+		verticesFile: './data/legendVertices.json',
+		onDataReady: function () {
+			tycoonGraph = new TycoonGraph({
+				parentId:   me.legendId,
+				configFile: me.configLegendFile,
+				store: legendStore
+			});
+		}
 	});
 	
 }
@@ -416,8 +403,9 @@ TycoonGraph.prototype.parepareVerticesRawData = function(verticesArray) {
 	return res;
 }
 
-TycoonGraph.prototype.setPath = function(verticesRaw) {
+TycoonGraph.prototype.setPath = function(verticesRaw, zoomTo) {
 	if (!verticesRaw) return;
+	if (typeof zoomTo === 'undefined') zoomTo = true;
 	var me = this;
 	var verticesArray = Array.isArray(verticesRaw) ? verticesRaw : verticesRaw.split(',');
 	var preparedData = me.parepareVerticesRawData(verticesArray);
@@ -430,7 +418,7 @@ TycoonGraph.prototype.setPath = function(verticesRaw) {
 	me.drawEdges(me.pathObj.edges, me.hierarchyOrder[me.hierarchyOrderIds.paths], me.pathWidth, false);
 	me.drawLabels();
 
-	me.zoomTo(me.pathObj);
+	if (zoomTo) me.zoomTo(me.pathObj);
 }
 
 TycoonGraph.prototype.zoomTo = function(region) {
