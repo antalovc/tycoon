@@ -74,7 +74,7 @@ TycoonSchedule.prototype.loadData = function() {
 
 	me.edges    = me.store.getEdges();
 	me.vertices = me.store.getVertices();
-	me.schedule = me.store.getSchedule();
+	me.trains   = me.store.getSchedule();
 	me.prepareData();
 	me.draw();
 }
@@ -108,55 +108,90 @@ TycoonSchedule.prototype.getSizes = function(config) {
 TycoonSchedule.prototype.draw = function() {
 	var me = this;
 
-	var newViewHeight = me.verticesInterval * me.vertices.length;
+	me.calculatedViewHeight = me.verticesInterval * me.vertices.length;
 
 	me.svg
-		.attr('height', newViewHeight + me.margin.top + me.margin.bottom)		;
+		.attr('height', me.calculatedViewHeight + me.margin.top + me.margin.bottom)		;
 
-	me.vis.attr('height', newViewHeight)
+	me.vis.attr('height', me.calculatedViewHeight)
 		.attr('transform', "translate(" + me.margin.left + "," + me.margin.top + ")");
 
-	var formatTime = d3.timeFormat('%H:%M');
+	me.drawTimeAxis();
+	me.drawStationsAxis();
+	me.drawTrains();
+}
 
-	var x = d3.scaleTime()//time.scale()
-		.domain([d3.timeParse(me.fromTime), d3.timeParse(me.toTime)])
+TycoonSchedule.prototype.drawTimeAxis = function() {
+	var me = this;
+
+	me.formatTime = d3.timeFormat('%H:%M');
+	me.parseTime  = d3.timeParse('%H:%M');
+
+	me.xScale = d3.scaleTime()//time.scale()
+		.domain([me.parseTime(me.fromTime), me.parseTime(me.toTime)])
 		.range([0, me.viewWidth]);
 
-	var y = d3.scaleLinear()//scale.linear()
+	var xAxisTop = d3.axisTop()
+		.scale(me.xScale)
+		.ticks(6)
+		.tickFormat(me.formatTime),
+		xAxisBottom = d3.axisBottom()
+		.scale(me.xScale)
+		.ticks(6)
+		.tickFormat(me.formatTime);
+
+	me.vis.append("g")
+		.call(xAxisTop);
+	me.vis.append("g")
+		.attr("transform", "translate(0," + me.calculatedViewHeight + ")")
+		.call(xAxisBottom);
+
+}
+
+TycoonSchedule.prototype.drawStationsAxis = function() {
+	var me = this;
+
+	me.yScale = d3.scaleLinear()//scale.linear()
 		.domain([0, me.vertices.length-1])
 		.range([0, me.verticesInterval * me.vertices.length]);
 
-	var xAxis = d3.axisBottom()
-		.scale(x)
-		.ticks(8)
-		.tickFormat(formatTime);
-
-	var line = d3.line()
-		.x(function(d) { return x(d.time); })
-		.y(function(d, i) { return y(i); })
-		.defined(function (d) { return d !== null; })
-		/*.interpolate("linear")*/;
-
 	var station = me.vis.append("g")
-		.attr("class", "station")
+		.attr("class", "stations")
 		.selectAll("g")
 		.data(me.vertices)
 		.enter().append("g")
-		.attr("transform", function(d, i) { return "translate(0," + y(i) + ")"; });
+		.attr("transform", function(d, i) { return "translate(0," + me.yScale(i) + ")"; });
 	station.append("text")
 		.attr("x", -6)
 		.attr("dy", ".35em")
 		.text(function(d) { return d.label; });
 	station.append("line")
-		.attr("x2", me.viewHeight);
+		.attr("x2", me.viewWidth);
+}
 
-	me.vis.append("g")
-		.attr("class", "")
-		.call(xAxis.orient("left"));
-	me.vis.append("g")
-		.attr("class", "")
-		.attr("transform", "translate(0," + me.viewWidth + ")")
-		.call(xAxis.orient("right"));
+TycoonSchedule.prototype.drawTrains = function() {
+	var me = this;
+	var line = d3.line()
+		.defined(function (d) { return d !== null; })
+		.x(function(d) { return me.xScale(me.parseTime(d.time)); })
+		.y(function(d, i) { return me.yScale(i); })
+		/*.interpolate("linear")*/;
+
+	var trains = me.vis.append("g")
+		.attr("class", "trains")
+		.selectAll("g")
+		.data(me.trains)
+		.enter();
+
+	var train = trains.append("g")
+		.attr("class", "train");
+	train.append("path")
+		.attr("d", function(d) { return line(d); });
+	train/*.selectAll("circle")*/
+		/*.data(function(d) { return d.stops; })*/
+		/*.enter()*/.append("circle")
+			.attr("transform", function(d, i) { return "translate(" + me.xScale(me.parseTime(d.time)) + "," + me.yScale(i) + ")"; })
+			.attr("r", 2);
 }
 
 TycoonSchedule.prototype.mergeObjs = function(dst, src) {
