@@ -11,7 +11,7 @@ TycoonSchedule.prototype.loadConfig = function(config) {
 				function(error, configContents) {
 					if (error) return console.warn('Failed load vertices file at ' + 
 						config.configFile + ':\n' + error);
-					me.initConfig(me.mergeObjs(config, configContents));
+					me.initConfig(Utils.mergeObjs(config, configContents));
 				})
 	}
 	else
@@ -30,13 +30,13 @@ TycoonSchedule.prototype.initConfig = function(config) {
 	this.fromTime = '00:00';
 	this.toTime   = '23:59';
 
-	this.mergeObjs(this, config);
+	Utils.mergeObjs(this, config);
 
 	/* mandatory config params: */
 	// ["parentId", "width", "height"]
 	this.parentNode = d3.select('#' + config.parentId);
 
-	var sz = this.getSizes(config);
+	var sz = Utils.getSizesFromConfig(config);
 	this.width      = sz.width;
 	this.height     = sz.height;
 
@@ -84,36 +84,15 @@ TycoonSchedule.prototype.prepareData = function() {
 	me.verticesSize = me.store.getVerticesSize();
 }
 
-TycoonSchedule.prototype.getSizes = function(config) {
-	var resHeight = config.height, 
-		resWidth  = config.width,
-		isWidthPc  = (typeof resWidth === 'string' && resWidth.slice(-1) === '%'),
-		isHeightPc = (typeof resHeight === 'string' && resHeight.slice(-1) === '%');
-
-	if (isWidthPc || isHeightPc) {
-		var node = document.getElementById(config.parentId),
-			style = getComputedStyle(node, null),
-			sz = node.getBoundingClientRect();
-			resHeight = (sz.height - parseInt(style.getPropertyValue('border-top-width')) 
-				- parseInt(style.getPropertyValue('border-bottom-width')))
-				* parseInt(resHeight) / 100;
-			resWidth = (sz.width - parseInt(style.getPropertyValue('border-left-width')) 
-				- parseInt(style.getPropertyValue('border-right-width')))
-				* parseInt(resWidth) / 100;
-	}
-
-	return {width: resWidth, height: resHeight};
-}
-
 TycoonSchedule.prototype.draw = function() {
 	var me = this;
 
-	me.calculatedViewHeight = me.verticesInterval * me.vertices.length;
+	me.calculatedViewWidth = me.verticesInterval * me.vertices.length;
 
 	me.svg
-		.attr('height', me.calculatedViewHeight + me.margin.top + me.margin.bottom)		;
+		.attr('width', me.calculatedViewWidth + me.margin.left + me.margin.right)		;
 
-	me.vis.attr('height', me.calculatedViewHeight)
+	me.vis.attr('width', me.calculatedViewWidth)
 		.attr('transform', "translate(" + me.margin.left + "," + me.margin.top + ")");
 
 	me.drawTimeAxis();
@@ -127,31 +106,23 @@ TycoonSchedule.prototype.drawTimeAxis = function() {
 	me.formatTime = d3.timeFormat('%H:%M');
 	me.parseTime  = d3.timeParse('%H:%M');
 
-	me.xScale = d3.scaleTime()//time.scale()
+	me.yScale = d3.scaleTime()//time.scale()
 		.domain([me.parseTime(me.fromTime), me.parseTime(me.toTime)])
-		.range([0, me.viewWidth]);
+		.range([0, me.viewHeight]);
 
-	var xAxisTop = d3.axisTop()
-		.scale(me.xScale)
-		.ticks(6)
-		.tickFormat(me.formatTime),
-		xAxisBottom = d3.axisBottom()
-		.scale(me.xScale)
+	var yAxisLeft = d3.axisLeft()
+		.scale(me.yScale)
 		.ticks(6)
 		.tickFormat(me.formatTime);
 
 	me.vis.append("g")
-		.call(xAxisTop);
-	me.vis.append("g")
-		.attr("transform", "translate(0," + me.calculatedViewHeight + ")")
-		.call(xAxisBottom);
-
+		.call(yAxisLeft);
 }
 
 TycoonSchedule.prototype.drawStationsAxis = function() {
 	var me = this;
 
-	me.yScale = d3.scaleLinear()//scale.linear()
+	me.xScale = d3.scaleLinear()//scale.linear()
 		.domain([0, me.vertices.length-1])
 		.range([0, me.verticesInterval * me.vertices.length]);
 
@@ -160,22 +131,36 @@ TycoonSchedule.prototype.drawStationsAxis = function() {
 		.selectAll("g")
 		.data(me.vertices)
 		.enter().append("g")
-		.attr("transform", function(d, i) { return "translate(0," + me.yScale(i) + ")"; });
+		.attr("transform", function(d, i) { return "translate(" + me.xScale(i) + ",0)"; });
 	station.append("text")
+		.attr("class", "topAxis")
+		.attr("x", 6)
+		.attr("y", -10)
+		.attr("transform", "rotate(-70, 6, -10)")
+		.text(function(d) { return d.label; });
+	station.append("text")
+		.attr("class", "bottomAxis")
+		.attr("x", 6)
+		.attr("y", me.viewHeight + 10)
+		.attr("transform", "rotate(-70, 6, " + (me.viewHeight + 10) + ")")
+		.text(function(d) { return d.label; });
+	/*station.append("text")
 		.attr("x", -6)
 		.attr("dy", ".35em")
-		.text(function(d) { return d.label; });
+		.text(function(d) { return d.label; });*/
 	station.append("line")
-		.attr("x2", me.viewWidth);
+		.attr("y2", me.viewHeight);
 }
 
 TycoonSchedule.prototype.drawTrains = function() {
 	var me = this;
 	var line = d3.line()
 		.defined(function (d) { return d !== null; })
-		.x(function(d) { return me.xScale(me.parseTime(d.time)); })
-		.y(function(d, i) { return me.yScale(i); })
+		.x(function(d, i) { return me.xScale(i); })
+		.y(function(d) { return me.yScale(me.parseTime(d.time)); })
 		/*.interpolate("linear")*/;
+
+	var colors = Utils.generateNColors(me.trains.length);
 
 	var trains = me.vis.append("g")
 		.attr("class", "trains")
@@ -186,18 +171,13 @@ TycoonSchedule.prototype.drawTrains = function() {
 	var train = trains.append("g")
 		.attr("class", "train");
 	train.append("path")
-		.attr("d", function(d) { return line(d); });
-	train/*.selectAll("circle")*/
-		/*.data(function(d) { return d.stops; })*/
-		/*.enter()*/.append("circle")
-			.attr("transform", function(d, i) { return "translate(" + me.xScale(me.parseTime(d.time)) + "," + me.yScale(i) + ")"; })
+		.attr("d", function(d) { return line(d.schedule); })
+		.attr("stroke", function(d, i) { return colors[i]; });
+	train.selectAll("circle")
+		.data(function(d) { return d.schedule; })
+		.enter()
+			.filter(function(d) { return d; })
+		.append("circle")
+			.attr("transform", function(d, i) { return "translate(" + me.xScale(i) + "," + me.yScale(me.parseTime(d.time)) + ")"; })
 			.attr("r", 2);
 }
-
-TycoonSchedule.prototype.mergeObjs = function(dst, src) {
-	for (var attrname in src) { if (src.hasOwnProperty(attrname)) dst[attrname] = src[attrname]; }
-	return dst;
-};
-
-//TODO: basic class or singleton for 
-// mergeObjs,getSizes,loadConfig

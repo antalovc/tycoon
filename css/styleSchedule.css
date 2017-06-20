@@ -17,13 +17,16 @@
 
 /*stations axis*/
 .stations text {
-  text-anchor: end;
-  max-width: 45px;
-
   font-family: sans-serif;
   font-size: 10px;
+}
 
-  text-overflow: ellipsis;
+.stations .topAxis {
+	text-anchor: start;
+}
+
+.stations .bottomAxis {
+	text-anchor: end;
 }
 
 .stations text:hover {
@@ -48,11 +51,10 @@
 
 /*trains*/
 .train circle {
-  stroke: #fff;
+  stroke: #3f4;
 }
 
 .train path {
   fill: none;
   stroke-width: 1.5px;
-  stroke: #000;
 }

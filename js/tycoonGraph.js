@@ -11,7 +11,7 @@ TycoonGraph.prototype.loadConfig = function(config) {
 				function(error, configContents) {
 					if (error) return console.warn("Failed load graph config file at " + 
 						config.configFile + ':\n' + error);
-					me.initConfig(me.mergeObjs(config, configContents));
+					me.initConfig(Utils.mergeObjs(config, configContents));
 				})
 	}
 	else
@@ -60,14 +60,14 @@ TycoonGraph.prototype.initConfig = function(config) {
 	this.zoomDuration         = 1000;
 	this.margin               = {top: 50, right: 50, bottom: 50, left: 50};
 
-	this.mergeObjs(this, config);
+	Utils.mergeObjs(this, config);
 
 	/* mandatory config params: */
 	// ["parentId", "width", "height", "edgesFile", "verticesFile", "calibrateScale"]
 	this.parentNode = d3.select('#' + config.parentId);
 	this.legendId   = config.legendId;
 
-	var sz = this.getSizes(config);
+	var sz = Utils.getSizesFromConfig(config);
 	this.width      = sz.width;
 	this.height     = sz.height;
 	
@@ -450,11 +450,6 @@ TycoonGraph.prototype.getMarkerDst = function(d) {
 TycoonGraph.prototype.getMarkerSrc = function(d) {
 	var mkType = this.vertices[d.source-1].marker;
 	return (mkType != this.verticesTypesIds.SWITCH) ? ('url(#' + this.verticesTypes[mkType-1] + ')') : null;
-};
-
-TycoonGraph.prototype.mergeObjs = function(dst, src) {
-	for (var attrname in src) { if (src.hasOwnProperty(attrname)) dst[attrname] = src[attrname]; }
-	return dst;
 };
 
 //Graph with adjacent list http://blog.benoitvallon.com/data-structures-in-javascript/the-graph-data-structure/
