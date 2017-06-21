@@ -82,12 +82,31 @@ TycoonSchedule.prototype.loadData = function() {
 TycoonSchedule.prototype.prepareData = function() {
 	var me = this;
 	me.verticesSize = me.store.getVerticesSize();
+
+	//get list of unique vertices and their ids if needed
+	me.handledVertices = [],
+	me.handledVerticesIds = [];
+	if (me.removeAbsentVertices) {
+		me.trains.forEach(function(d) {
+			d.schedule.forEach(function(st) {
+				me.handledVerticesIds.push(st.id);
+			})
+		});
+		me.handledVerticesIds = Utils.UniqueSort(me.handledVerticesIds);
+		me.handledVerticesIds.forEach(function(id) {
+			me.handledVertices.push(me.vertices[id-1]);
+		});
+	}
+	else {
+		me.handledVertices = me.vertices;
+		me.handledVerticesIds = me.vertices;
+	}
 }
 
 TycoonSchedule.prototype.draw = function() {
 	var me = this;
 
-	me.calculatedViewWidth = me.verticesInterval * me.vertices.length;
+	me.calculatedViewWidth = me.verticesInterval * me.handledVertices.length;
 
 	me.svg
 		.attr('width', me.calculatedViewWidth + me.margin.left + me.margin.right)		;
@@ -122,16 +141,21 @@ TycoonSchedule.prototype.drawTimeAxis = function() {
 TycoonSchedule.prototype.drawStationsAxis = function() {
 	var me = this;
 
-	me.xScale = d3.scaleLinear()//scale.linear()
-		.domain([0, me.vertices.length-1])
-		.range([0, me.verticesInterval * me.vertices.length]);
+	me.xScale = me.removeAbsentVertices ?
+		d3.scaleBand()
+			.domain(me.handledVerticesIds)
+			.range([0, me.verticesInterval * me.handledVertices.length]) :
+		d3.scaleLinear()
+			.domain([0, me.handledVertices.length-1])
+			.range([0, me.verticesInterval * me.handledVertices.length]);
+	
 
 	var station = me.vis.append("g")
 		.attr("class", "schedule-stations")
 		.selectAll("g")
-		.data(me.vertices)
+		.data(me.handledVertices)
 		.enter().append("g")
-		.attr("transform", function(d, i) { return "translate(" + me.xScale(i) + ",0)"; });
+		.attr("transform", function(d, i) { return "translate(" + me.xScale(d.id) + ",0)"; });
 	station.append("text")
 		.attr("class", "topAxis")
 		.attr("x", 6)
@@ -156,7 +180,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 	var me = this;
 	var line = d3.line()
 		.defined(function (d) { return d !== null; })
-		.x(function(d) { return me.xScale(d.id-1); })
+		.x(function(d) { return me.xScale(d.id); })
 		.y(function(d) { return me.yScale(me.parseTime(d.time)); })
 		/*.interpolate("linear")*/;
 
@@ -189,7 +213,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 		.enter().append("circle")
 			.attr("class", "schedule-station")
 			.style("display",     function(d) { return d == null ? "none" : null; })
-			.attr("transform",    function(d) { return d !== null ? ("translate(" + me.xScale(d.id-1) + "," + me.yScale(me.parseTime(d.time)) + ")") : null; })
+			.attr("transform",    function(d) { return d !== null ? ("translate(" + me.xScale(d.id) + "," + me.yScale(me.parseTime(d.time)) + ")") : null; })
 			.attr("fill",         function(d) { return d !== null ? "#fff" : null; })
 			.attr("stroke-width", function(d) {return d !== null ? (d.status ? "4px" : "1.5px") : null; })
 			.attr("r", 2);
