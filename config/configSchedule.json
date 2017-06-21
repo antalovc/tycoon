@@ -3,7 +3,9 @@
 	"width"    : "100%",
 	"height"   : "100%",
 	"margin"   : {"top": 65, "right": 25, "bottom": 65, "left": 65},
+	"timeFormat": "%H:%M",
 	"fromTime" : "10:00",
 	"toTime"   : "15:00",
-	"verticesInterval" : 20
+	"verticesInterval" : 20,
+	"removeAbsentVertices": true
 }

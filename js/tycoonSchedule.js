@@ -103,8 +103,8 @@ TycoonSchedule.prototype.draw = function() {
 TycoonSchedule.prototype.drawTimeAxis = function() {
 	var me = this;
 
-	me.formatTime = d3.timeFormat('%H:%M');
-	me.parseTime  = d3.timeParse('%H:%M');
+	me.formatTime = d3.timeFormat(me.timeFormat);
+	me.parseTime  = d3.timeParse(me.timeFormat);
 
 	me.yScale = d3.scaleTime()//time.scale()
 		.domain([me.parseTime(me.fromTime), me.parseTime(me.toTime)])
@@ -112,7 +112,7 @@ TycoonSchedule.prototype.drawTimeAxis = function() {
 
 	var yAxisLeft = d3.axisLeft()
 		.scale(me.yScale)
-		.ticks(6)
+		.ticks(20)
 		.tickFormat(me.formatTime);
 
 	me.vis.append("g")
@@ -127,7 +127,7 @@ TycoonSchedule.prototype.drawStationsAxis = function() {
 		.range([0, me.verticesInterval * me.vertices.length]);
 
 	var station = me.vis.append("g")
-		.attr("class", "stations")
+		.attr("class", "schedule-stations")
 		.selectAll("g")
 		.data(me.vertices)
 		.enter().append("g")
@@ -156,28 +156,50 @@ TycoonSchedule.prototype.drawTrains = function() {
 	var me = this;
 	var line = d3.line()
 		.defined(function (d) { return d !== null; })
-		.x(function(d, i) { return me.xScale(i); })
+		.x(function(d) { return me.xScale(d.id-1); })
 		.y(function(d) { return me.yScale(me.parseTime(d.time)); })
 		/*.interpolate("linear")*/;
 
 	var colors = Utils.generateNColors(me.trains.length);
 
 	var trains = me.vis.append("g")
-		.attr("class", "trains")
+		.attr("class", "schedule-trains")
 		.selectAll("g")
 		.data(me.trains)
 		.enter();
 
+	//create groups for each route
 	var train = trains.append("g")
-		.attr("class", "train");
-	train.append("path")
-		.attr("d", function(d) { return line(d.schedule); })
+		.attr("class", "schedule-train")
 		.attr("stroke", function(d, i) { return colors[i]; });
-	train.selectAll("circle")
+
+	//add route that connects all points to show on hover
+	train.append("path")
+		.attr("class", "schedule-backline")
+		.attr("d", function(d) {return line(d.schedule); });
+
+	//add route that connects only connected points
+	train.append("path")
+		.attr("class", "schedule-line")
+		.attr("d", function(d) { return line(d.schedule); })
+
+	//add stations markers
+	train.selectAll(".schedule-station")
 		.data(function(d) { return d.schedule; })
-		.enter()
-			.filter(function(d) { return d; })
-		.append("circle")
-			.attr("transform", function(d, i) { return "translate(" + me.xScale(i) + "," + me.yScale(me.parseTime(d.time)) + ")"; })
+		.enter().append("circle")
+			.attr("class", "schedule-station")
+			.style("display",     function(d) { return d == null ? "none" : null; })
+			.attr("transform",    function(d) { return d !== null ? ("translate(" + me.xScale(d.id-1) + "," + me.yScale(me.parseTime(d.time)) + ")") : null; })
+			.attr("fill",         function(d) { return d !== null ? "#fff" : null; })
+			.attr("stroke-width", function(d) {return d !== null ? (d.status ? "4px" : "1.5px") : null; })
 			.attr("r", 2);
+
+	train
+		.on("mouseover", function(d) {
+			if (me.graph) 
+				me.graph.setPath(d.schedule.map(function(station) {
+					return station.id;
+				}), false);
+		})
+		.on("mouseout",  function(d) {var a = 1;});
 }
