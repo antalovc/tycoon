@@ -18,6 +18,7 @@ var tycoonStore = new TycoonStore({
 	edgesFile: getParameterByName('edges'),
 	verticesFile: getParameterByName('vertices'),
 	scheduleFile: getParameterByName('schedule'),
+	sortByX: true,
 	onDataReady: function () {
 
 		tycoonGraph = new TycoonGraph({
@@ -28,7 +29,7 @@ var tycoonStore = new TycoonStore({
 			path: window.location.hash ? window.location.hash.substr(1) : ''
 		});
 		window.onhashchange = function () {
-			tycoonGraph.setPath(window.location.hash ? window.location.hash.substr(1) : '');
+			tycoonGraph.drawRoute(window.location.hash ? window.location.hash.substr(1) : '');
 		};
 
 		tycoonSchedule = new TycoonSchedule({

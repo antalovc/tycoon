@@ -133,7 +133,7 @@ TycoonGraph.prototype.loadData = function() {
 	me.vertices = me.store.getVertices();
 	me.prepareData();
 	me.draw();
-	me.setPath(me.pathObj.raw);
+	me.drawRoute(me.pathObj.raw);
 }
 
 TycoonGraph.prototype.prepareData = function() {
@@ -403,7 +403,7 @@ TycoonGraph.prototype.parepareVerticesRawData = function(verticesArray) {
 	return res;
 }
 
-TycoonGraph.prototype.setPath = function(verticesRaw, zoomTo) {
+TycoonGraph.prototype.drawRoute = function(verticesRaw, zoomTo) {
 	if (!verticesRaw) return;
 	if (typeof zoomTo === 'undefined') zoomTo = true;
 	var me = this;

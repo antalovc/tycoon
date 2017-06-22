@@ -131,7 +131,7 @@ TycoonSchedule.prototype.drawTimeAxis = function() {
 
 	var yAxisLeft = d3.axisLeft()
 		.scale(me.yScale)
-		.ticks(20)
+		.ticks(me.nTicks)
 		.tickFormat(me.formatTime);
 
 	me.vis.append("g")
@@ -221,7 +221,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 	train
 		.on("mouseover", function(d) {
 			if (me.graph) 
-				me.graph.setPath(d.schedule.map(function(station) {
+				me.graph.drawRoute(d.schedule.map(function(station) {
 					return station.id;
 				}), false);
 		})
