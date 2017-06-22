@@ -127,10 +127,11 @@ var TycoonStore = (function () {
 		}
 
 		//update schedule into new ids
-		for (var i = 0; i < _schedule.length; i++) {
-			for (var j = 0; j <  _schedule[i].schedule.length; j++) 
-				 _schedule[i].schedule[j].id = sortIndexes[ _schedule[i].schedule[j].id-1];
-		}
+		if (me.scheduleFile)
+			for (var i = 0; i < _schedule.length; i++) {
+				for (var j = 0; j <  _schedule[i].schedule.length; j++) 
+					 _schedule[i].schedule[j].id = sortIndexes[ _schedule[i].schedule[j].id-1];
+			}
 	}
 
 	return TycoonStore;
