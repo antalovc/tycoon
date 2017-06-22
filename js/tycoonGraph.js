@@ -20,9 +20,9 @@ TycoonGraph.prototype.loadConfig = function(config) {
 
 TycoonGraph.prototype.initConfig = function(config) {
 	/* ---init unloadable config--- */
-	this.hierarchyOrder = ["path", "edge", "vertice", "pathLabel"];
+	this.hierarchyOrder = ["curVertice", "path", "edge", "vertice", "pathLabel"];
 	this.hierarchyOrderIds = {
-		paths: 0, edges: 1, vertices: 2, pathLabel: 3
+		curVertice:0, paths: 1, edges: 2, vertices: 3, pathLabel: 4
 	};
 
 	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
@@ -220,7 +220,7 @@ TycoonGraph.prototype.draw = function() {
 	me.drawVertices();
 }
 
-TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMarkers) {
+TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMarkers, edgesColor) {
 	if (typeof drawMarkers === 'undefined') drawMarkers = true;
 
 	var me = this,
@@ -261,6 +261,7 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		.append('path')
 			.attr('class', className)
 			.attr('stroke-width', strokeWidth)
+			.attr('stroke', function() {return (edgesColor ? edgesColor : me.defaultRouteColor);})
 			.attr('marker-end', function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
 			.attr('marker-start', function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
 			.attr('d', function(d) { return 'M ' +  vertices[d.source-1].x*scale + ' ' +  (verticesSize.maxY - vertices[d.source-1].y)*scale + 
@@ -271,6 +272,7 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		.append('path')
 			.attr('class', className)
 			.attr('stroke-width', strokeWidth)
+			.attr('stroke', function() {return (edgesColor ? edgesColor : me.defaultRouteColor);})
 			.attr('marker-end', function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
 			.attr('marker-start', function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
 		.datum(function(d) {return d.coords;})
@@ -290,7 +292,7 @@ TycoonGraph.prototype.drawVertices = function () {
 	var svgG = me.getSvgGroupByClass(className);
 
 	/* prepare to draw vertices */
-	var graphVertices = me.graphVertices = me.vis.selectAll('.' + className)
+	var graphVertices = me.graphVertices = svgG.selectAll('.' + className)
 		.data(vertices)
 		.enter().append("svg:g")
 			.attr('class', className)
@@ -378,6 +380,39 @@ TycoonGraph.prototype.drawLabels = function() {
 	pathLabelVertices.exit().remove();/* remove */
 }
 
+TycoonGraph.prototype.drawVertice = function(verticeId) {
+	var me = this,
+		vertices = me.vertices,
+		scale = me.scale,
+		verticesSize = me.verticesSize;
+
+	//get the needed vertice
+	var curVertice = me.vertices.filter(function(vertice) {
+		return vertice.id === verticeId;
+	});
+
+	var className = me.hierarchyOrder[me.hierarchyOrderIds.curVertice];
+	var svgG = me.getSvgGroupByClass(className);
+
+	/* prepare to draw vertices */
+	var vertice = svgG.selectAll('.' + className)
+		.data(curVertice);
+		//.filter(function(d) { return (d.id === verticeId) ? d : null; });
+
+	vertice.enter()
+		.append("svg:g")
+			.attr('class', className)
+			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
+		.append("circle")
+			.attr('cx', 0)
+			.attr('cy', 0)
+			.attr('stroke-width',  me.verticeBorder + 3)
+			.attr('r', me.verticeRadius + 5);
+
+	vertice.exit().remove()
+}
+
+
 TycoonGraph.prototype.parepareVerticesRawData = function(verticesArray) {
 	var me = this, edge,
 		res = {
@@ -403,22 +438,33 @@ TycoonGraph.prototype.parepareVerticesRawData = function(verticesArray) {
 	return res;
 }
 
-TycoonGraph.prototype.drawRoute = function(verticesRaw, zoomTo) {
-	if (!verticesRaw) return;
+TycoonGraph.prototype.drawRoute = function(verticesRaw, zoomTo, color) {
 	if (typeof zoomTo === 'undefined') zoomTo = true;
 	var me = this;
-	var verticesArray = Array.isArray(verticesRaw) ? verticesRaw : verticesRaw.split(',');
-	var preparedData = me.parepareVerticesRawData(verticesArray);
 
-	me.pathObj.raw   = verticesRaw;
-	me.pathObj.edges = preparedData.edges;
-	me.pathObj.vertices = preparedData.vertices;
-	me.pathObj.minX  = preparedData.minX; me.pathObj.maxX = preparedData.maxX;
-	me.pathObj.minY  = preparedData.minY; me.pathObj.maxY = preparedData.maxY;
-	me.drawEdges(me.pathObj.edges, me.hierarchyOrder[me.hierarchyOrderIds.paths], me.pathWidth, false);
+	if (verticesRaw){
+		var verticesArray = Array.isArray(verticesRaw) ? verticesRaw : verticesRaw.split(',');
+		var preparedData = me.parepareVerticesRawData(verticesArray);
+
+		me.pathObj.raw   = verticesRaw;
+		me.pathObj.edges = preparedData.edges;
+		me.pathObj.vertices = preparedData.vertices;
+		me.pathObj.minX  = preparedData.minX; me.pathObj.maxX = preparedData.maxX;
+		me.pathObj.minY  = preparedData.minY; me.pathObj.maxY = preparedData.maxY;
+	} else
+		me.pathObj = {
+			raw: "",
+			edges: [],
+			vertices: [],
+			maxX: -Infinity,
+			maxY: -Infinity,
+			minX: Infinity,
+			minY: Infinity
+		}
+	me.drawEdges(me.pathObj.edges, me.hierarchyOrder[me.hierarchyOrderIds.paths], me.pathWidth, false, color);
 	me.drawLabels();
 
-	if (zoomTo) me.zoomTo(me.pathObj);
+	if (zoomTo && verticesRaw) me.zoomTo(me.pathObj);
 }
 
 TycoonGraph.prototype.zoomTo = function(region) {

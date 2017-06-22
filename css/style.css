@@ -34,7 +34,6 @@
 
 /*graph selected path*/
 .path {
-	stroke: cornflowerblue;
 	fill: transparent;
 }
 
@@ -62,4 +61,10 @@
 	font-weight: bold;
 	fill: midnightblue;
 	text-decoration: underline;
+}
+
+/*selected vertice color*/
+.curVertice {
+	stroke: #777;
+	fill: none;
 }

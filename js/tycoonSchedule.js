@@ -29,6 +29,7 @@ TycoonSchedule.prototype.initConfig = function(config) {
 	this.margin   = {top: 50, right: 50, bottom: 50, left: 50};
 	this.fromTime = '00:00';
 	this.toTime   = '23:59';
+	this.colors = [];
 
 	Utils.mergeObjs(this, config);
 
@@ -184,7 +185,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 		.y(function(d) { return me.yScale(me.parseTime(d.time)); })
 		/*.interpolate("linear")*/;
 
-	var colors = Utils.generateNColors(me.trains.length);
+	me.colors = Utils.generateNColors(me.trains.length);
 
 	var trains = me.vis.append("g")
 		.attr("class", "schedule-trains")
@@ -195,7 +196,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 	//create groups for each route
 	var train = trains.append("g")
 		.attr("class", "schedule-train")
-		.attr("stroke", function(d, i) { return colors[i]; });
+		.attr("stroke", function(d, i) { return me.colors[i]; });
 
 	//add route that connects all points to show on hover
 	train.append("path")
@@ -208,7 +209,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 		.attr("d", function(d) { return line(d.schedule); })
 
 	//add stations markers
-	train.selectAll(".schedule-station")
+	var station = train.selectAll(".schedule-station")
 		.data(function(d) { return d.schedule; })
 		.enter().append("circle")
 			.attr("class", "schedule-station")
@@ -218,12 +219,23 @@ TycoonSchedule.prototype.drawTrains = function() {
 			.attr("stroke-width", function(d) {return d !== null ? (d.status ? "4px" : "1.5px") : null; })
 			.attr("r", 2);
 
+	//add hover events
 	train
 		.on("mouseover", function(d) {
 			if (me.graph) 
 				me.graph.drawRoute(d.schedule.map(function(station) {
 					return station.id;
-				}), false);
+				}), false, me.colors[d.id_train-1]);
 		})
-		.on("mouseout",  function(d) {var a = 1;});
+		.on("mouseout",  function() {
+			if (me.graph) me.graph.drawRoute();
+		});
+
+	station
+		.on("mouseover", function(d) {
+			if (me.graph) me.graph.drawVertice(d.id);
+		})
+		.on("mouseout",  function() {
+			if (me.graph) me.graph.drawVertice();
+		});
 }
