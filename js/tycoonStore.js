@@ -4,11 +4,12 @@ var TycoonStore = (function () {
 	var _edges = null,
 		_vertices = null,
 		_schedule = null,
-		_verticesSize = null;
+		_verticesSize = null,
+		me = null;
 
 	// Constructor
 	function TycoonStore(config) {
-		var me = this;
+		me = this;
 
 		//config members
 		me.edgesFile = null;
@@ -21,7 +22,6 @@ var TycoonStore = (function () {
 
 	TycoonStore.prototype.initConfig = function (config) {
 		/* load config */
-		var me = this;
 		me.edgesFile = config.edgesFile;
 		me.verticesFile = config.verticesFile;
 		me.scheduleFile = config.scheduleFile;
@@ -33,8 +33,6 @@ var TycoonStore = (function () {
 	}
 
 	TycoonStore.prototype.loadData = function () {
-		var me = this;
-
 		var cb = function (error, edges, vertices, schedule) {
 			if (!error) {
 				_edges = edges;
@@ -59,7 +57,6 @@ var TycoonStore = (function () {
 	}
 
 	TycoonStore.prototype.prepareData = function () {
-		var me = this;
 		var verticesSize = _verticesSize = {
 			maxX: -Infinity,
 			maxY: -Infinity,
@@ -78,7 +75,6 @@ var TycoonStore = (function () {
 	}
 	/*
 	TycoonStore.prototype.createAdjacencyList = function() {
-		var me = this;
 		me.adjacencyList = new Array(me.vertices.length);
 		for (var i = 0; i < me.adjacencyList.length; i++)
 			me.adjacencyList[i] = {};
@@ -105,8 +101,6 @@ var TycoonStore = (function () {
 	}
 
 	function sortVertices() {
-		var me = this;
-
 		//sort vertices by X coordinate
 		var sortIndexes = new Array(_vertices.length);
 		var sortedVertices = _vertices.sort(function (a, b) {
