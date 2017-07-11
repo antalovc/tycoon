@@ -29,7 +29,7 @@ TycoonSchedule.prototype.initConfig = function(config) {
 	this.margin   = {top: 50, right: 50, bottom: 50, left: 50};
 	this.fromTime = '00:00';
 	this.toTime   = '23:59';
-	this.colors = [];
+	this.colors = {};
 
 	Utils.mergeObjs(this, config);
 
@@ -185,7 +185,9 @@ TycoonSchedule.prototype.drawTrains = function() {
 		.y(function(d) { return me.yScale(me.parseTime(d.time)); })
 		/*.interpolate("linear")*/;
 
-	me.colors = Utils.generateNColors(me.trains.length);
+	var colors = Utils.generateNColors(me.trains.length);
+	for (var i = 0; i < me.trains.length; i++)
+		me.colors[me.trains[i].id_train] = colors[i]; 
 
 	var trains = me.vis.append("g")
 		.attr("class", "schedule-trains")
@@ -196,7 +198,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 	//create groups for each route
 	var train = trains.append("g")
 		.attr("class", "schedule-train")
-		.attr("stroke", function(d, i) { return me.colors[i]; });
+		.attr("stroke", function(d, i) { return me.colors[d.id_train]; });
 
 	//add route that connects all points to show on hover
 	train.append("path")
@@ -225,7 +227,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 			if (me.graph) 
 				me.graph.drawRoute(d.schedule.map(function(station) {
 					return station.id;
-				}), false, me.colors[d.id_train-1]);
+				}), false, me.colors[d.id_train]);
 		})
 		.on("mouseout",  function() {
 			if (me.graph) me.graph.drawRoute();

@@ -175,7 +175,7 @@ TycoonGraph.prototype.drawLegend = function() {
 		edgesFile:    './data/legendEdges.json',
 		verticesFile: './data/legendVertices.json',
 		onDataReady: function () {
-			tycoonGraph = new TycoonGraph({
+			legendGraph = new TycoonGraph({
 				parentId:   me.legendId,
 				configFile: me.configLegendFile,
 				store: legendStore
