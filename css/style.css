@@ -65,6 +65,6 @@
 
 /*selected vertice color*/
 .curVertice {
-	stroke: #777;
+	/*stroke: #777;*/
 	fill: none;
 }

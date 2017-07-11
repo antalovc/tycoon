@@ -20,9 +20,9 @@ TycoonGraph.prototype.loadConfig = function(config) {
 
 TycoonGraph.prototype.initConfig = function(config) {
 	/* ---init unloadable config--- */
-	this.hierarchyOrder = ["curVertice", "path", "edge", "vertice", "pathLabel"];
+	this.hierarchyOrder = ["path", "edge", "vertice", "pathLabel", "curVertice"];
 	this.hierarchyOrderIds = {
-		curVertice:0, paths: 1, edges: 2, vertices: 3, pathLabel: 4
+		 paths: 0, edges: 1, vertices: 2, pathLabel: 3, curVertice: 4
 	};
 
 	this.verticesTypes = ["DEADEND", "SWITCH", "PLATFORM", "GATEWAY"];
@@ -61,6 +61,10 @@ TycoonGraph.prototype.initConfig = function(config) {
 	this.zoomMin              = 0.001;
 	this.zoomMax              = 1000;
 	this.margin               = {top: 50, right: 50, bottom: 50, left: 50};
+	this.selRouteColor        = 'cornflowerblue';
+	this.selStationColor      = 'red';
+	this.selStationWidth      = this.verticeBorder + 5;
+	this.selStationRadius     = this.verticeRadius + 7;
 
 	Utils.mergeObjs(this, config);
 
@@ -251,7 +255,7 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		.append('path')
 			.attr('class', className)
 			.attr('stroke-width', strokeWidth)
-			.attr('stroke', function() {return (edgesColor ? edgesColor : me.defaultRouteColor);})
+			.attr('stroke', function() {return (edgesColor ? edgesColor : me.selRouteColor);})
 			.attr('marker-end', function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
 			.attr('marker-start', function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
 			.attr('d', function(d) { return 'M ' +  vertices[d.source-1].x*scale + ' ' +  (verticesSize.maxY - vertices[d.source-1].y)*scale + 
@@ -262,7 +266,7 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		.append('path')
 			.attr('class', className)
 			.attr('stroke-width', strokeWidth)
-			.attr('stroke', function() {return (edgesColor ? edgesColor : me.defaultRouteColor);})
+			.attr('stroke', function() {return (edgesColor ? edgesColor : me.selRouteColor);})
 			.attr('marker-end', function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
 			.attr('marker-start', function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
 		.datum(function(d) {return d.coords;})
@@ -396,8 +400,9 @@ TycoonGraph.prototype.drawVertice = function(verticeId) {
 		.append("circle")
 			.attr('cx', 0)
 			.attr('cy', 0)
-			.attr('stroke-width',  me.verticeBorder + 3)
-			.attr('r', me.verticeRadius + 5);
+			.attr('stroke', me.selStationColor)
+			.attr('stroke-width',  me.selStationWidth)
+			.attr('r', me.selStationRadius);
 
 	vertice.exit().remove()
 }
