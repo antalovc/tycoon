@@ -14,6 +14,8 @@
 	"labelFontSize"        : "5px",
 	"pathLabelFontSize"    : "7px",
 	"zoomDuration"         : 1000,
+	"zoomMin"              : 0.4,
+	"zoomMax"              : 4,
 	"margin"               : {"top": 50, "right": 50, "bottom": 50, "left": 50},
 	"defaultRouteColor"    : "cornflowerblue"
 }

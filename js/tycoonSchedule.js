@@ -29,7 +29,9 @@ TycoonSchedule.prototype.initConfig = function(config) {
 	this.margin   = {top: 50, right: 50, bottom: 50, left: 50};
 	this.fromTime = '00:00';
 	this.toTime   = '23:59';
-	this.colors = {};
+	this.zoomMin  = 0.001;
+	this.zoomMax  = 1000;
+	this.colors   = {};
 
 	Utils.mergeObjs(this, config);
 
@@ -38,11 +40,11 @@ TycoonSchedule.prototype.initConfig = function(config) {
 	this.parentNode = d3.select('#' + config.parentId);
 
 	var sz = Utils.getSizesFromConfig(config);
-	this.width      = sz.width;
-	this.height     = sz.height;
+	this.svgWidth      = sz.width;
+	this.svgHeight     = sz.height;
 
-	this.viewWidth  = this.width  - this.margin.right - this.margin.left;
-	this.viewHeight = this.height - this.margin.top   - this.margin.bottom;
+	this.viewWidth  = this.svgWidth  - this.margin.right - this.margin.left;
+	this.viewHeight = this.svgHeight - this.margin.top   - this.margin.bottom;
 
 	this.initVisuals();
 }
@@ -51,23 +53,24 @@ TycoonSchedule.prototype.initVisuals = function() {
 	var me = this;
 
 	// Define the zoom function for the zoomable tree
-	/*function zoom() {
+	function zoom() {
 		var duration = 0;
-		if (!d3.event.sourceEvent) duration = me.zoomDuration;
-		me.vis.transition().duration(duration).attr("transform", d3.event.transform);
-	}*/
+		me.vis.transition().duration(0).attr("transform", d3.event.transform);
+	}
 	// Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
-	/*this.zoomListener = d3.zoom().scaleExtent([0.001, 1000]).on("zoom", zoom);*/
+	me.zoomListener = d3.zoom()
+		.scaleExtent([me.zoomMin, me.zoomMax])
+		.on("zoom", zoom);
 
 	// Create svg canvas to draw in
-	this.svg = this.parentNode.insert('svg:svg', ':first-child')
-		.attr('width',  this.width)
-		.attr('height', this.height)
-		/*.call(this.zoomListener)*/;
+	me.svg = me.parentNode.insert('svg:svg', ':first-child')
+		.attr('width',  me.svgWidth)
+		.attr('height', me.svgHeight)
+		.call(this.zoomListener);
 
-	this.vis = this.svg.append('svg:g');
+	me.vis = me.svg.append('svg:g');
 
-	this.loadData();
+	me.loadData();
 }
 
 TycoonSchedule.prototype.loadData = function() {
@@ -108,12 +111,17 @@ TycoonSchedule.prototype.draw = function() {
 	var me = this;
 
 	me.calculatedViewWidth = me.verticesInterval * me.handledVertices.length;
+	me.vis.attr('width', me.calculatedViewWidth);
 
-	me.svg
-		.attr('width', me.calculatedViewWidth + me.margin.left + me.margin.right)		;
-
-	me.vis.attr('width', me.calculatedViewWidth)
-		.attr('transform', "translate(" + me.margin.left + "," + me.margin.top + ")");
+	//now that we can appreciate schedule's size - set zooms
+	maxWidth = me.calculatedViewWidth > me.viewWidth ? me.calculatedViewWidth : me.viewWidth;
+	me.zoomListener.translateExtent([
+		[-me.margin.left, -me.margin.top], 
+		[maxWidth + me.margin.right, me.svgHeight-me.margin.top]
+	]);
+	me.svg.call(me.zoomListener.transform, 
+		d3.zoomIdentity.translate(me.margin.left, me.margin.top)
+	);
 
 	me.drawTimeAxis();
 	me.drawStationsAxis();
@@ -218,7 +226,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 			.style("display",     function(d) { return d == null ? "none" : null; })
 			.attr("transform",    function(d) { return d !== null ? ("translate(" + me.xScale(d.id) + "," + me.yScale(me.parseTime(d.time)) + ")") : null; })
 			.attr("fill",         function(d) { return d !== null ? "#fff" : null; })
-			.attr("stroke-width", function(d) {return d !== null ? (d.status ? "4px" : "1.5px") : null; })
+			.attr("stroke-width", function(d) {return d !== null ? (d.status.stopped ? "3px" : "1px") : null; })
 			.attr("r", 2);
 
 	//add hover events

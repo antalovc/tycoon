@@ -58,6 +58,8 @@ TycoonGraph.prototype.initConfig = function(config) {
 	this.labelFontSize        = '5px';
 	this.pathLabelFontSize    = '7px';
 	this.zoomDuration         = 1000;
+	this.zoomMin              = 0.001;
+	this.zoomMax              = 1000;
 	this.margin               = {top: 50, right: 50, bottom: 50, left: 50};
 
 	Utils.mergeObjs(this, config);
@@ -92,7 +94,7 @@ TycoonGraph.prototype.initVisuals = function() {
 		me.vis.transition().duration(duration).attr("transform", d3.event.transform);
 	}
 	// Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
-	me.zoomListener = d3.zoom().scaleExtent([0.001, 1000]).on("zoom", zoom);
+	me.zoomListener = d3.zoom().scaleExtent([me.zoomMin, me.zoomMax]).on("zoom", zoom);
 
 	// Create svg canvas to draw in
 	me.svg = me.parentNode.insert("svg:svg",":first-child")

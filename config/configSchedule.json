@@ -5,8 +5,10 @@
 	"margin"   : {"top": 65, "right": 25, "bottom": 65, "left": 65},
 	"timeFormat": "%H:%M",
 	"fromTime" : "10:00",
-	"toTime"   : "15:00",
+	"toTime"   : "15:30",
 	"nTicks"   :  20,
 	"verticesInterval" : 20,
-	"removeAbsentVertices": false
+	"zoomMin"  : 0.8,
+	"zoomMax"  : 5,
+	"removeAbsentVertices": true
 }
