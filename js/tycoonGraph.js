@@ -68,13 +68,13 @@ TycoonGraph.prototype.initConfig = function(config) {
 	this.legendId   = config.legendId;
 
 	var sz = Utils.getSizesFromConfig(config);
-	this.width      = sz.width;
-	this.height     = sz.height;
+	this.svgWidth      = sz.width;
+	this.svgHeight     = sz.height;
 	
 	this.calibrateScale = config.calibrateScale;
 
-	this.viewWidth  = this.width  - this.margin.right - this.margin.left;
-	this.viewHeight = this.height - this.margin.top   - this.margin.bottom;
+	this.viewWidth  = this.svgWidth  - this.margin.right - this.margin.left;
+	this.viewHeight = this.svgHeight - this.margin.top   - this.margin.bottom;
 
 	this.initVisuals();
 }
@@ -83,7 +83,7 @@ TycoonGraph.prototype.initVisuals = function() {
 	var me = this;
 
 	// Create svg canvas for legend
-	this.drawLegend();
+	me.drawLegend();
 
 	// Define the zoom function for the zoomable tree
 	function zoom() {
@@ -92,17 +92,26 @@ TycoonGraph.prototype.initVisuals = function() {
 		me.vis.transition().duration(duration).attr("transform", d3.event.transform);
 	}
 	// Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
-	this.zoomListener = d3.zoom().scaleExtent([0.001, 1000]).on("zoom", zoom);
+	me.zoomListener = d3.zoom().scaleExtent([0.001, 1000]).on("zoom", zoom);
 
 	// Create svg canvas to draw in
-	this.svg = this.parentNode.insert("svg:svg",":first-child")
-		.attr("width",  this.width)
-		.attr("height", this.height)
-		.call(this.zoomListener);
+	me.svg = me.parentNode.insert("svg:svg",":first-child")
+		.attr("width",  me.svgWidth)
+		.attr("height", me.svgHeight)
+		.call(me.zoomListener);
+	Utils.addEvent(window, "resize", function(){
+		var sz = Utils.getSizesFromConfig(me);
+		me.svgWidth  = sz.width;
+		me.svgHeight = sz.height;
+		me.viewWidth  = me.svgWidth  - me.margin.right - me.margin.left;
+		me.viewHeight = me.svgHeight - me.margin.top   - me.margin.bottom;
+		me.svg.attr("width",  me.svgWidth)
+			  .attr("height", me.svgHeight);
+	});
 
 	// Append graph vertices markers into 'defs' section of svg
-	this.svg.append("svg:defs").selectAll("marker")
-		.data(this.verticesTypes)
+	me.svg.append("svg:defs").selectAll("marker")
+		.data(me.verticesTypes)
 		.enter().append("svg:marker")
 			.attr("id", String)
 			.attr("viewBox", "0 -5 10 10")
@@ -122,8 +131,8 @@ TycoonGraph.prototype.initVisuals = function() {
 			})
 			.attr("fill", function(d, i) {return me.verticesTypesColors[i];});
 
-	this.vis = this.svg.append("svg:g");
-	this.loadData();
+	me.vis = me.svg.append("svg:g");
+	me.loadData();
 }
 
 TycoonGraph.prototype.loadData = function() {
@@ -141,27 +150,6 @@ TycoonGraph.prototype.prepareData = function() {
 	me.verticesSize = me.store.getVerticesSize();
 
 	me.createAdjacencyList();
-}
-
-TycoonGraph.prototype.getSizes = function(config) {
-	var resHeight = config.height, 
-		resWidth  = config.width,
-		isWidthPc  = (typeof resWidth === 'string' && resWidth.slice(-1) === '%'),
-		isHeightPc = (typeof resHeight === 'string' && resHeight.slice(-1) === '%');
-
-	if (isWidthPc || isHeightPc) {
-		var node = document.getElementById(config.parentId),
-			style = getComputedStyle(node, null),
-			sz = node.getBoundingClientRect();
-			resHeight = (sz.height - parseInt(style.getPropertyValue('border-top-width')) 
-				- parseInt(style.getPropertyValue('border-bottom-width')))
-				* parseInt(resHeight) / 100;
-			resWidth = (sz.width - parseInt(style.getPropertyValue('border-left-width')) 
-				- parseInt(style.getPropertyValue('border-right-width')))
-				* parseInt(resWidth) / 100;
-	}
-
-	return {width: resWidth, height: resHeight};
 }
 
 TycoonGraph.prototype.createAdjacencyList = function() {
