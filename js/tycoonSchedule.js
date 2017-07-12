@@ -9,8 +9,8 @@ TycoonSchedule.prototype.loadConfig = function(config) {
 	if (config.configFile) {
 		d3.json(config.configFile,
 				function(error, configContents) {
-					if (error) return console.warn('Failed load vertices file at ' + 
-						config.configFile + ':\n' + error);
+					if (error) return console.warn("Failed load vertices file at " + 
+						config.configFile + ":\n" + error);
 					me.initConfig(Utils.mergeObjs(config, configContents));
 				})
 	}
@@ -21,14 +21,14 @@ TycoonSchedule.prototype.loadConfig = function(config) {
 TycoonSchedule.prototype.initConfig = function(config) {
 
 	this.store = config.store;
-	if (!this.store) console.warn('Tycoon schedule: no data store provided');
+	if (!this.store) console.warn("Tycoon schedule: no data store provided");
 
 	//defaults
-	this.width    = '100%';
-	this.height   = '100%';
+	this.width    = "100%";
+	this.height   = "100%";
 	this.margin   = {top: 50, right: 50, bottom: 50, left: 50};
-	this.fromTime = '00:00';
-	this.toTime   = '23:59';
+	this.fromTime = "00:00";
+	this.toTime   = "23:59";
 	this.zoomMin  = 0.001;
 	this.zoomMax  = 1000;
 	this.colors   = {};
@@ -37,7 +37,7 @@ TycoonSchedule.prototype.initConfig = function(config) {
 
 	/* mandatory config params: */
 	// ["parentId", "width", "height"]
-	this.parentNode = d3.select('#' + config.parentId);
+	this.parentNode = d3.select("#" + config.parentId);
 
 	var sz = Utils.getSizesFromConfig(config);
 	this.svgWidth      = sz.width;
@@ -45,6 +45,8 @@ TycoonSchedule.prototype.initConfig = function(config) {
 
 	this.viewWidth  = this.svgWidth  - this.margin.right - this.margin.left;
 	this.viewHeight = this.svgHeight - this.margin.top   - this.margin.bottom;
+
+	this.idPrefixer = "train_"; //d3.select doesn't like fully numerical ids 
 
 	this.initVisuals();
 }
@@ -63,12 +65,12 @@ TycoonSchedule.prototype.initVisuals = function() {
 		.on("zoom", zoom);
 
 	// Create svg canvas to draw in
-	me.svg = me.parentNode.insert('svg:svg', ':first-child')
-		.attr('width',  me.svgWidth)
-		.attr('height', me.svgHeight)
+	me.svg = me.parentNode.insert("svg:svg", ":first-child")
+		.attr("width",  me.svgWidth)
+		.attr("height", me.svgHeight)
 		.call(this.zoomListener);
 
-	me.vis = me.svg.append('svg:g');
+	me.vis = me.svg.append("svg:g");
 
 	me.loadData();
 }
@@ -111,7 +113,7 @@ TycoonSchedule.prototype.draw = function() {
 	var me = this;
 
 	me.calculatedViewWidth = me.verticesInterval * me.handledVertices.length;
-	me.vis.attr('width', me.calculatedViewWidth);
+	me.vis.attr("width", me.calculatedViewWidth);
 
 	//now that we can appreciate schedule's size - set zooms
 	maxWidth = me.calculatedViewWidth > me.viewWidth ? me.calculatedViewWidth : me.viewWidth;
@@ -126,6 +128,14 @@ TycoonSchedule.prototype.draw = function() {
 	me.drawTimeAxis();
 	me.drawStationsAxis();
 	me.drawTrains();
+	me.drawMenu()
+}
+
+TycoonSchedule.prototype.drawMenu = function() {
+	this.menu = new TycoonScheduleMenu({
+		parentId: this.parentId,
+		schedule: this
+	});
 }
 
 TycoonSchedule.prototype.drawTimeAxis = function() {
@@ -206,6 +216,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 	//create groups for each route
 	var train = trains.append("g")
 		.attr("class", "schedule-train")
+		.attr("id", function(d) {return me.idPrefixer + d.id_train; })
 		.attr("stroke", function(d, i) { return me.colors[d.id_train]; });
 
 	//add route that connects all points to show on hover
@@ -229,6 +240,11 @@ TycoonSchedule.prototype.drawTrains = function() {
 			.attr("stroke-width", function(d) {return d !== null ? (d.status.stopped ? "3px" : "1px") : null; })
 			.attr("r", 2);
 
+	//add tooltip
+	me.tooltip = d3.select("body").append("div")
+		.attr("class", "schedule-tooltip")
+		.style("opacity", 0);
+
 	//add hover events
 	train
 		.on("mouseover", function(d) {
@@ -244,8 +260,36 @@ TycoonSchedule.prototype.drawTrains = function() {
 	station
 		.on("mouseover", function(d) {
 			if (me.graph) me.graph.drawVertice(d.id);
+			me.tooltip.transition()
+				.duration(200)
+				.style("opacity", 1);
+			me.tooltip.html("Train: " + "<br/>" +
+					"Station: " + "<br/>" +
+					"Operation: " + "<br/>" +
+					"Time : " + d.time
+				)
+				.style("left", (d3.event.pageX + 15) + "px")
+				.style("top", (d3.event.pageY - 28) + "px");
 		})
 		.on("mouseout",  function() {
 			if (me.graph) me.graph.drawVertice();
+			me.tooltip.transition()
+				.duration(500)
+				.style("opacity", 0);
 		});
+
+}
+
+TycoonSchedule.prototype.getTrainColorByID = function (id_train) {
+	return this.colors[id_train];
+}
+
+TycoonSchedule.prototype.showTrain = function (id_train, show) {
+	if (typeof show === "undefined") show = true;
+
+	d3.select("#" + this.idPrefixer + id_train).style("opacity", show ? 1 : 0);
+}
+
+TycoonSchedule.prototype.filterOperations = function (operationsArray) {
+
 }

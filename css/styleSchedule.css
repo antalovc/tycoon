@@ -1,7 +1,8 @@
 /*base element*/
+
 .scheduleContainer {
-	position: absolute; 
-	top: 50%; 
+	position: absolute;
+	top: 50%;
 	left: 0;
 
 	display: block;
@@ -15,10 +16,12 @@
 	border-top: 1px solid #aaa;
 }
 
+
 /*stations axis*/
+
 .schedule-stations text {
-  font-family: sans-serif;
-  font-size: 10px;
+	font-family: sans-serif;
+	font-size: 10px;
 }
 
 .schedule-stations .topAxis {
@@ -34,21 +37,228 @@
 }
 
 .schedule-stations line {
-  stroke: #ddd;
-  stroke-dasharray: 1,1;
+	stroke: #ddd;
+	stroke-dasharray: 1, 1;
 }
 
+
 /*time axes*/
+
 .axis path {
-  display: none;
+	display: none;
 }
 
 .axis line {
-  stroke: #000;
+	stroke: #000;
 }
 
+
 /*trains*/
+
 .schedule-train {
-  fill: none;
-  stroke-width: 1.5px;
+	fill: none;
+	stroke-width: 1.5px;
+}
+
+/*tschedule tooltip*/
+.schedule-tooltip {
+	position: absolute;
+	padding: 4px;
+	font: 12px sans-serif;
+	background: #5c6bc0;
+	color: white;
+	border: 0px;
+	border-radius: 8px;
+	pointer-events: none;
+}
+
+
+/*menu show/hidebuttons*/
+
+.schedule-menuButton {
+	position: absolute;
+	display: block;
+	width: 30px;
+	height: 30px;
+
+	background-color: #5c6bc0;
+	border-radius: 50%;
+	color: white;
+
+	text-align: center;
+	line-height: 30px;
+	font-weight: bold;
+	text-decoration: none;
+}
+
+.schedule-menuButton_showing {
+	bottom: 20px;
+	right: 20px;
+}
+
+.schedule-menuButton_showing::after {
+	content: '\2630';
+	/*burger symbol*/
+}
+
+.schedule-menuButton_hiding {
+	bottom: 20px;
+	left: -40px;
+}
+
+.schedule-menuButton_hiding::after {
+	content: '\21D2';
+	/*right-arrow symbol*/
+}
+
+
+/*menu*/
+
+.schedule-menu {
+	position: absolute;
+	bottom: 0px;
+	right: -50px;
+	top: 0px;
+
+	display: none;
+	width: 300px;
+	padding-right: 50px;
+
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+
+	background-color: white;
+	border-left: 1px solid gray;
+	color: gray;
+}
+
+
+/*style to show menu and its animations*/
+
+.schedule-menu_shown {
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	-webkit-animation: popup-show 0.3s;
+	animation: popup-show 0.3s;
+	animation-timing-function: ease-out;
+}
+
+@-webkit-keyframes popup-show {
+	0% {
+		-webkit-transform: translateX(10000px);
+		transform: translateX(10000px);
+	}
+	/*70% {
+		-webkit-transform: translateX(-30px);
+		transform: translateX(-30px);
+	}
+	90% {
+		-webkit-transform: translateX(10px);
+		transform: translateX(10px);
+	}*/
+	100% {
+		-webkit-transform: translateX(0);
+		transform: translateX(0);
+	}
+}
+
+@keyframes popup-show {
+	0% {
+		-webkit-transform: translateX(10000px);
+		transform: translateX(10000px);
+	}
+	/*70% {
+		-webkit-transform: translateX(-30px);
+		transform: translateX(-30px);
+	}
+	90% {
+		-webkit-transform: translateX(10px);
+		transform: translateX(10px);
+	}*/
+	100% {
+		-webkit-transform: translateX(0);
+		transform: translateX(0);
+	}
+}
+
+/*div to contain operations list*/
+.schedule-operationsList {
+	flex-grow: 0;
+
+	padding: 10px 6px;
+	height: 40px;
+
+	font-family: "Open Sans", "Tahoma", sans-serif;
+
+	background-color: lightgrey;
+}
+
+/*div to contain trains list*/
+.schedule-trainsList {
+	flex-grow: 1;
+
+	padding: 10px 6px;
+
+	display: -webkit-box;
+	display: -ms-flexbox;
+	display: flex;
+	flex-direction: column;
+	justify-content: flex-start;
+	align-items: stretch;
+
+	overflow-y: auto;
+
+	font-family: "Open Sans", "Tahoma", sans-serif;
+}
+
+/*div to contain each train info*/
+.schedule-trainDiv {
+	flex-grow: 0;
+	padding: 4px;
+	margin: 0px 6px;
+
+	font-size: 0;
+
+	cursor: pointer;
+
+	border-top: 1px solid #cfd8dc;
+}
+
+.schedule-trainDiv:first-child {
+	border: none;
+}
+
+.schedule-trainDiv:hover {
+	background-color: #eceff1;
+}
+
+.schedule-trainDiv_inactive .schedule-trainColorDiv,
+.schedule-trainDiv_inactive .schedule-trainIdDiv {
+	opacity: 0.3;
+}
+
+/*div to show train's color*/
+.schedule-trainColorDiv {
+	display: inline-block;
+	margin: 2px 6px 2px 0px;
+	width: 18px;
+	height: 18px;
+	vertical-align: middle;
+
+	opacity: 1;
+	border-radius: 50%;
+}
+
+/*div to show train's color*/
+.schedule-trainIdDiv {
+	display: inline-block;
+	text-align: center;
+	vertical-align: middle;
+	font-size: 20px;
+	font-style: normal;
+	padding-left: 10px;
+
+	opacity: 1;
 }

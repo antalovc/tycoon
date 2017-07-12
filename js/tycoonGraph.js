@@ -10,7 +10,7 @@ TycoonGraph.prototype.loadConfig = function(config) {
 		d3.json(config.configFile,
 				function(error, configContents) {
 					if (error) return console.warn("Failed load graph config file at " + 
-						config.configFile + ':\n' + error);
+						config.configFile + ":\n" + error);
 					me.initConfig(Utils.mergeObjs(config, configContents));
 				})
 	}
@@ -40,13 +40,13 @@ TycoonGraph.prototype.initConfig = function(config) {
 	};
 
 	this.store = config.store;
-	if (!this.store) console.warn('Tycoon graph: no data store provided');
+	if (!this.store) console.warn("Tycoon graph: no data store provided");
 
 	/* ---init loadable config--- */
 
 	//defaults
-	this.width                = '100%';
-	this.height               = '100%';
+	this.width                = "100%";
+	this.height               = "100%";
 	this.edgeWidth            = 1;
 	this.pathWidth            = 3;
 	this.verticeRadius        = 2;
@@ -55,14 +55,14 @@ TycoonGraph.prototype.initConfig = function(config) {
 	this.platformHeightFactor = 2;
 	this.labelXFactor         = 1.9;
 	this.labelYFactor         = 0.2;
-	this.labelFontSize        = '5px';
-	this.pathLabelFontSize    = '7px';
+	this.labelFontSize        = "5px";
+	this.pathLabelFontSize    = "7px";
 	this.zoomDuration         = 1000;
 	this.zoomMin              = 0.001;
 	this.zoomMax              = 1000;
 	this.margin               = {top: 50, right: 50, bottom: 50, left: 50};
-	this.selRouteColor        = 'cornflowerblue';
-	this.selStationColor      = 'red';
+	this.selRouteColor        = "cornflowerblue";
+	this.selStationColor      = "red";
 	this.selStationWidth      = this.verticeBorder + 5;
 	this.selStationRadius     = this.verticeRadius + 7;
 
@@ -70,7 +70,7 @@ TycoonGraph.prototype.initConfig = function(config) {
 
 	/* mandatory config params: */
 	// ["parentId", "width", "height", "edgesFile", "verticesFile", "calibrateScale"]
-	this.parentNode = d3.select('#' + config.parentId);
+	this.parentNode = d3.select("#" + config.parentId);
 	this.legendId   = config.legendId;
 
 	var sz = Utils.getSizesFromConfig(config);
@@ -93,8 +93,8 @@ TycoonGraph.prototype.initVisuals = function() {
 
 	// Define the zoom function for the zoomable tree
 	function zoom() {
-		var duration = 0;
-		if (!d3.event.sourceEvent) duration = me.zoomDuration;
+		var duration = me.zoomDuration; //0;
+		//if (!d3.event.sourceEvent) duration = me.zoomDuration;
 		me.vis.transition().duration(duration).attr("transform", d3.event.transform);
 	}
 	// Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents
@@ -105,7 +105,7 @@ TycoonGraph.prototype.initVisuals = function() {
 		.attr("width",  me.svgWidth)
 		.attr("height", me.svgHeight)
 		.call(me.zoomListener);
-	Utils.addEvent(window, "resize", function(){
+	Utils.addEvent(window, "resize", function() {
 		var sz = Utils.getSizesFromConfig(me);
 		me.svgWidth  = sz.width;
 		me.svgHeight = sz.height;
@@ -115,7 +115,7 @@ TycoonGraph.prototype.initVisuals = function() {
 			  .attr("height", me.svgHeight);
 	});
 
-	// Append graph vertices markers into 'defs' section of svg
+	// Append graph vertices markers into "defs" section of svg
 	me.svg.append("svg:defs").selectAll("marker")
 		.data(me.verticesTypes)
 		.enter().append("svg:marker")
@@ -170,7 +170,7 @@ TycoonGraph.prototype.createAdjacencyList = function() {
 }
 
 TycoonGraph.prototype.getSvgGroupByClass = function(className) {
-	return this.vis.select('#' + className + 's');
+	return this.vis.select("#" + className + "s");
 }
 
 TycoonGraph.prototype.drawLegend = function() {
@@ -178,8 +178,8 @@ TycoonGraph.prototype.drawLegend = function() {
 	if (!me.legendId) return;
 
 	var legendStore = new TycoonStore({
-		edgesFile:    './data/legendEdges.json',
-		verticesFile: './data/legendVertices.json',
+		edgesFile:    "./data/legendEdges.json",
+		verticesFile: "./data/legendVertices.json",
 		onDataReady: function () {
 			legendGraph = new TycoonGraph({
 				parentId:   me.legendId,
@@ -215,7 +215,7 @@ TycoonGraph.prototype.draw = function() {
 }
 
 TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMarkers, edgesColor) {
-	if (typeof drawMarkers === 'undefined') drawMarkers = true;
+	if (typeof drawMarkers === "undefined") drawMarkers = true;
 
 	var me = this,
 		vertices = me.vertices,
@@ -234,43 +234,43 @@ TycoonGraph.prototype.drawEdges = function(edges, className, strokeWidth, drawMa
 		.y(function(d) { return (verticesSize.maxY - d.y)*scale; });
 
 	/* prepare to draw edges */
-	var graphEdges = svgG.selectAll('.' + className)
+	var graphEdges = svgG.selectAll("." + className)
 		.data(edges);
 	var graphEdgesEnter = graphEdges.enter()/*,
 		graphEdgesUpdate = graphEdges.update();
 
 	/* update straight edges */
 	graphEdges
-		.filter(function(d) { return typeof d.coords === 'undefined'; })
-			.attr('d', function(d) { return 'M ' +  vertices[d.source-1].x*scale + ' ' +  (verticesSize.maxY - vertices[d.source-1].y)*scale  + 
-				' L ' + vertices[d.target-1].x*scale + ' ' + (verticesSize.maxY - vertices[d.target-1].y)*scale} );
+		.filter(function(d) { return typeof d.coords === "undefined"; })
+			.attr("d", function(d) { return "M " +  vertices[d.source-1].x*scale + " " +  (verticesSize.maxY - vertices[d.source-1].y)*scale  + 
+				" L " + vertices[d.target-1].x*scale + " " + (verticesSize.maxY - vertices[d.target-1].y)*scale} );
 	/* update coordinates edges */
 	graphEdges
-		.filter(function(d) { return typeof d.coords != 'undefined'; })
+		.filter(function(d) { return typeof d.coords != "undefined"; })
 		.datum(function(d) {return d.coords;})
-			.attr('d', edgeLine)
+			.attr("d", edgeLine)
 	/* draw new straight edges */
 	graphEdgesEnter
-		.filter(function(d) { return typeof d.coords === 'undefined'; })
-		.append('path')
-			.attr('class', className)
-			.attr('stroke-width', strokeWidth)
-			.attr('stroke', function() {return (edgesColor ? edgesColor : me.selRouteColor);})
-			.attr('marker-end', function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
-			.attr('marker-start', function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
-			.attr('d', function(d) { return 'M ' +  vertices[d.source-1].x*scale + ' ' +  (verticesSize.maxY - vertices[d.source-1].y)*scale + 
-				' L ' + vertices[d.target-1].x*scale + ' ' + (verticesSize.maxY - vertices[d.target-1].y)*scale} );
+		.filter(function(d) { return typeof d.coords === "undefined"; })
+		.append("path")
+			.attr("class", className)
+			.attr("stroke-width", strokeWidth)
+			.attr("stroke", function() {return (edgesColor ? edgesColor : me.selRouteColor);})
+			.attr("marker-end", function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
+			.attr("marker-start", function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
+			.attr("d", function(d) { return "M " +  vertices[d.source-1].x*scale + " " +  (verticesSize.maxY - vertices[d.source-1].y)*scale + 
+				" L " + vertices[d.target-1].x*scale + " " + (verticesSize.maxY - vertices[d.target-1].y)*scale} );
 	/* draw new coordinates edges */
 	graphEdgesEnter
-		.filter(function(d) { return typeof d.coords != 'undefined'; })
-		.append('path')
-			.attr('class', className)
-			.attr('stroke-width', strokeWidth)
-			.attr('stroke', function() {return (edgesColor ? edgesColor : me.selRouteColor);})
-			.attr('marker-end', function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
-			.attr('marker-start', function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
+		.filter(function(d) { return typeof d.coords != "undefined"; })
+		.append("path")
+			.attr("class", className)
+			.attr("stroke-width", strokeWidth)
+			.attr("stroke", function() {return (edgesColor ? edgesColor : me.selRouteColor);})
+			.attr("marker-end", function() {return drawMarkers ? me.getMarkerDst.apply(me, arguments) : null;})
+			.attr("marker-start", function() {return drawMarkers ? me.getMarkerSrc.apply(me, arguments) : null;})
 		.datum(function(d) {return d.coords;})
-			.attr('d', edgeLine);
+			.attr("d", edgeLine);
 
 
 	graphEdges.exit().remove();
@@ -286,21 +286,21 @@ TycoonGraph.prototype.drawVertices = function () {
 	var svgG = me.getSvgGroupByClass(className);
 
 	/* prepare to draw vertices */
-	var graphVertices = me.graphVertices = svgG.selectAll('.' + className)
+	var graphVertices = me.graphVertices = svgG.selectAll("." + className)
 		.data(vertices)
 		.enter().append("svg:g")
-			.attr('class', className)
-			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; });
+			.attr("class", className)
+			.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSize.maxY - d.y)*scale + ")"; });
 
 	/* draw circles for ARROW vertices*/
 	graphVertices
 		.filter(function(d) { return d.marker === me.verticesTypesIds.SWITCH; })
-		.append('circle')
-			.attr('class', 'arrowMark')
-			.attr('cx', 0)
-			.attr('cy', 0)
-			.attr('stroke-width',  me.verticeBorder)
-			.attr('r', me.verticeRadius);
+		.append("circle")
+			.attr("class", "arrowMark")
+			.attr("cx", 0)
+			.attr("cy", 0)
+			.attr("stroke-width",  me.verticeBorder)
+			.attr("r", me.verticeRadius);
 
 	/* draw squares for PLATFORM vertices*/
 	var x = -me.verticeRadius*me.platformWidthFactor/2,
@@ -309,14 +309,14 @@ TycoonGraph.prototype.drawVertices = function () {
 		h = me.verticeRadius*me.platformHeightFactor;
 	graphVertices
 		.filter(function(d) { return d.marker === me.verticesTypesIds.PLATFORM; })
-		.append('rect')
-			.attr('class', 'platformMark')
-			.attr('x', x)
-			.attr('y', y)
-			.attr('width', w)
-			.attr('height', h)
-			.attr('stroke-width',  me.verticeBorder)
-			.attr('r', me.verticeRadius);
+		.append("rect")
+			.attr("class", "platformMark")
+			.attr("x", x)
+			.attr("y", y)
+			.attr("width", w)
+			.attr("height", h)
+			.attr("stroke-width",  me.verticeBorder)
+			.attr("r", me.verticeRadius);
 
 	/* draw text labels */
 	me.drawLabels();
@@ -345,32 +345,32 @@ TycoonGraph.prototype.drawLabels = function() {
 	graphLabelVertices
 		.filter(function(d) {return isUsualLabel(d);})
 		.append("svg:text")
-			.attr('class', 'verticeLabel')
+			.attr("class", "verticeLabel")
 			.style("font-size", me.labelFontSize)
-			.attr('x', x)
-			.attr('y', y)
+			.attr("x", x)
+			.attr("y", y)
 			.text(function(d) { return d.label;})
-			.style('fill-opacity', 1);
+			.style("fill-opacity", 1);
 
 	// draw path first and last vertices
 	var className = me.hierarchyOrder[me.hierarchyOrderIds.pathLabel];
-	var pathLabelVertices = me.vis.selectAll('.' + className)
+	var pathLabelVertices = me.vis.selectAll("." + className)
 		.data(outerVertices);
 	pathLabelVertices/* update */
-		.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
+		.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSize.maxY - d.y)*scale + ")"; })
 		.select("text")
 			.text(function(d) { return d.label;})
 	pathLabelVertices/* enter */
 		.enter().append("svg:g")
-			.attr('class', className)
-			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
+			.attr("class", className)
+			.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSize.maxY - d.y)*scale + ")"; })
 		.append("svg:text")
-			.attr('class', 'pathVerticeLabel')
+			.attr("class", "pathVerticeLabel")
 			.style("font-size", me.pathLabelFontSize)
-			.attr('x', x)
-			.attr('y', y)
+			.attr("x", x)
+			.attr("y", y)
 			.text(function(d) { return d.label;})
-			.style('fill-opacity', 1);
+			.style("fill-opacity", 1);
 	pathLabelVertices.exit().remove();/* remove */
 }
 
@@ -389,20 +389,20 @@ TycoonGraph.prototype.drawVertice = function(verticeId) {
 	var svgG = me.getSvgGroupByClass(className);
 
 	/* prepare to draw vertices */
-	var vertice = svgG.selectAll('.' + className)
+	var vertice = svgG.selectAll("." + className)
 		.data(curVertice);
 		//.filter(function(d) { return (d.id === verticeId) ? d : null; });
 
 	vertice.enter()
 		.append("svg:g")
-			.attr('class', className)
-			.attr('transform', function(d) {return 'translate(' + d.x*scale + ',' + (verticesSize.maxY - d.y)*scale + ')'; })
+			.attr("class", className)
+			.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSize.maxY - d.y)*scale + ")"; })
 		.append("circle")
-			.attr('cx', 0)
-			.attr('cy', 0)
-			.attr('stroke', me.selStationColor)
-			.attr('stroke-width',  me.selStationWidth)
-			.attr('r', me.selStationRadius);
+			.attr("cx", 0)
+			.attr("cy", 0)
+			.attr("stroke", me.selStationColor)
+			.attr("stroke-width",  me.selStationWidth)
+			.attr("r", me.selStationRadius);
 
 	vertice.exit().remove()
 }
@@ -434,11 +434,11 @@ TycoonGraph.prototype.parepareVerticesRawData = function(verticesArray) {
 }
 
 TycoonGraph.prototype.drawRoute = function(verticesRaw, zoomTo, color) {
-	if (typeof zoomTo === 'undefined') zoomTo = true;
+	if (typeof zoomTo === "undefined") zoomTo = true;
 	var me = this;
 
 	if (verticesRaw){
-		var verticesArray = Array.isArray(verticesRaw) ? verticesRaw : verticesRaw.split(',');
+		var verticesArray = Array.isArray(verticesRaw) ? verticesRaw : verticesRaw.split(",");
 		var preparedData = me.parepareVerticesRawData(verticesArray);
 
 		me.pathObj.raw   = verticesRaw;
@@ -465,13 +465,13 @@ TycoonGraph.prototype.drawRoute = function(verticesRaw, zoomTo, color) {
 TycoonGraph.prototype.zoomTo = function(region) {
 	var me = this;
 
-	if (typeof duration === 'undefined') duration = 0;
-
 	/*get scale*/
 	var scaleX = me.viewWidth/(region.maxX - region.minX),
 		scaleY = me.viewHeight/(region.maxY - region.minY);
 	var zoomScale = ((scaleX > scaleY) ? scaleY : scaleX)/me.scale;
 	if (zoomScale === Infinity) zoomScale = 1;
+	if (zoomScale > me.zoomMax) zoomScale = me.zoomMax;
+	if (zoomScale < me.zoomMin) zoomScale = me.zoomMin;
 
 	me.svg.call(me.zoomListener.transform, 
 		d3.zoomIdentity
@@ -485,12 +485,12 @@ TycoonGraph.prototype.zoomTo = function(region) {
 
 TycoonGraph.prototype.getMarkerDst = function(d) {
 	var mkType = this.vertices[d.target-1].marker;
-	return (mkType != this.verticesTypesIds.SWITCH) ? ('url(#' + this.verticesTypes[mkType-1] + ')') : null;
+	return (mkType != this.verticesTypesIds.SWITCH) ? ("url(#" + this.verticesTypes[mkType-1] + ")") : null;
 };
 
 TycoonGraph.prototype.getMarkerSrc = function(d) {
 	var mkType = this.vertices[d.source-1].marker;
-	return (mkType != this.verticesTypesIds.SWITCH) ? ('url(#' + this.verticesTypes[mkType-1] + ')') : null;
+	return (mkType != this.verticesTypesIds.SWITCH) ? ("url(#" + this.verticesTypes[mkType-1] + ")") : null;
 };
 
 //Graph with adjacent list http://blog.benoitvallon.com/data-structures-in-javascript/the-graph-data-structure/
