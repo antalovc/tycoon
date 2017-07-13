@@ -107,15 +107,6 @@ TycoonGraph.prototype.initVisuals = function() {
 		.attr("width",  me.svgWidth)
 		.attr("height", me.svgHeight)
 		.call(me.zoomListener);
-	Utils.addEvent(window, "resize", function() {
-		var sz = Utils.getSizesFromConfig(me);
-		me.svgWidth  = sz.width;
-		me.svgHeight = sz.height;
-		me.viewWidth  = me.svgWidth  - me.margin.right - me.margin.left;
-		me.viewHeight = me.svgHeight - me.margin.top   - me.margin.bottom;
-		me.svg.attr("width",  me.svgWidth)
-			  .attr("height", me.svgHeight);
-	});
 
 	// Append graph vertices markers into "defs" section of svg
 	me.svg.append("svg:defs").selectAll("marker")
@@ -500,6 +491,17 @@ TycoonGraph.prototype.getMarkerSrc = function(d) {
 	var mkType = this.vertices[d.source-1].marker;
 	return (mkType != this.verticesTypesIds.SWITCH) ? ("url(#" + this.verticesTypes[mkType-1] + ")") : null;
 };
+
+TycoonGraph.prototype.onResize = function() {
+	var me = this;
+	var sz = Utils.getSizesFromConfig(me);
+	me.svgWidth  = sz.width;
+	me.svgHeight = sz.height;
+	me.viewWidth  = me.svgWidth  - me.margin.right - me.margin.left;
+	me.viewHeight = me.svgHeight - me.margin.top   - me.margin.bottom;
+	me.svg.attr("width",  me.svgWidth)
+		  .attr("height", me.svgHeight);
+}
 
 //Graph with adjacent list http://blog.benoitvallon.com/data-structures-in-javascript/the-graph-data-structure/
 //Force graph from adjacent list https://bl.ocks.org/mbostock/1199811

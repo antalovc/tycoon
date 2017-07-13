@@ -38,5 +38,10 @@ var tycoonStore = new TycoonStore({
 			store: tycoonStore,
 		});
 
+		Utils.addEvent(window, "resize", function() {
+			if (tycoonGraph.onResize) tycoonGraph.onResize();
+			if (tycoonSchedule.onResize) tycoonSchedule.onResize();
+		});
+
 	}
 });

@@ -8,7 +8,8 @@
 	"toTime"   : "17:00",
 	"nTicks"   :  10,
 	"verticesInterval" : 20,
-	"zoomMin"  : 0.8,
+	"zoomMin"  : 0.4,
 	"zoomMax"  : 5,
-	"removeAbsentVertices": true
+	"removeAbsentVertices": true,
+	"lineWidth": 1.5
 }

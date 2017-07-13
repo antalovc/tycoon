@@ -93,6 +93,8 @@ TycoonSchedule.prototype.prepareData = function() {
 	me.handledVertices = [];      //array of handled vertices
 	me.handledVerticesIds = [];   //array of their ids
 	me.handledVerticesIdsMap = {};//object to map id to position in handledVertices
+	me.operations = [];
+
 	if (me.removeAbsentVertices) {
 		//get ids of all the used vertices (non-unique)
 		me.trains.forEach(function(d) {
@@ -224,7 +226,8 @@ TycoonSchedule.prototype.drawTrains = function() {
 	var train = trains.append("g")
 		.attr("class", "schedule-train")
 		.attr("id", function(d) {return me.idPrefixer + d.id_train; })
-		.attr("stroke", function(d, i) { return me.colors[d.id_train]; });
+		.attr("stroke", function(d, i) { return me.colors[d.id_train]; })
+		.attr("stroke-width", me.lineWidth);
 
 	//add route that connects all points to show on hover
 	train.append("path")
@@ -323,4 +326,15 @@ TycoonSchedule.prototype.showTrain = function (id_train, show) {
 
 TycoonSchedule.prototype.filterOperations = function (operationsArray) {
 
+}
+
+TycoonSchedule.prototype.onResize = function() {
+	var me = this;
+	var sz = Utils.getSizesFromConfig(me);
+	me.svgWidth  = sz.width;
+	me.svgHeight = sz.height;
+	me.viewWidth  = me.svgWidth  - me.margin.right - me.margin.left;
+	me.viewHeight = me.svgHeight - me.margin.top   - me.margin.bottom;
+	me.svg.attr("width",  me.svgWidth)
+		  .attr("height", me.svgHeight);
 }
