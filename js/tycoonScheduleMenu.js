@@ -60,28 +60,36 @@ TycoonScheduleMenu.prototype.drawTrainsList = function() {
 	this.menu.appendChild(trainsDiv);
 
 	var trains = this.schedule.trains;
-	for (var i = 0; i < trains.length; i++)
-		this.drawTrainItem(trainsDiv, trains[i]);
+	trainsIds = new Array(trains.length);
+	for (var j = 0; j < trains.length; j++)
+		trainsIds[j] = trains[j].id_train;
+	this.drawTrainItem(trainsDiv, trainsIds, "Все поезда", "grey")
+	for (var i = 0; i < trains.length; i++) {
+		var trainId = trains[i].id_train;
+		this.drawTrainItem(trainsDiv, trainId, trainId, this.schedule.colors[trainId]); 
+	}
 }
 
-TycoonScheduleMenu.prototype.drawTrainItem = function(parentDiv, train) {
+TycoonScheduleMenu.prototype.drawTrainItem = function(parentDiv, trainId, text, color) {
 	var me = this;
 
 	//create external div
+	var idPrefix = "schedule-train-";
 	var trainDiv = document.createElement("div");
 	trainDiv.setAttribute("class", "schedule-trainDiv");
 	trainDiv.isTrainShown = true;
-	trainDiv.idTrain = train.id_train;
+	trainDiv.idTrain = trainId;
+	trainDiv.setAttribute("id", idPrefix + trainId);
 
 	//create first inner div to contain colored circle
 	var trainColorDiv = document.createElement("div");
 	trainColorDiv.setAttribute("class", "schedule-trainColorDiv");
-	trainColorDiv.style.backgroundColor = me.schedule.colors[train.id_train];
+	trainColorDiv.style.backgroundColor = color;
 
 	//create second inner div to contain train"s id
 	var trainIdDiv = document.createElement("div");
 	trainIdDiv.setAttribute("class", "schedule-trainIdDiv");
-	trainIdDiv.innerHTML = train.id_train;
+	trainIdDiv.innerHTML = text;
 
 	//add everything into document
 	trainDiv.appendChild(trainColorDiv);
@@ -90,9 +98,24 @@ TycoonScheduleMenu.prototype.drawTrainItem = function(parentDiv, train) {
 
 	//set events
 	Utils.addEvent(trainDiv, "click", function(event) {
-		var div = event.currentTarget;
+		var div = event.currentTarget,
+			idTrain = div.idTrain,
+			el, i;
 
-		me.schedule.showTrain(div.idTrain, !div.isTrainShown);
+		if (!Array.isArray(idTrain))
+			me.schedule.showTrain(idTrain, !div.isTrainShown);
+		else
+			for (i = 0; i < idTrain.length; i++) {
+				el = document.getElementById(idPrefix + idTrain[i]);
+				me.schedule.showTrain(idTrain[i], !div.isTrainShown);
+				el.isTrainShown = !div.isTrainShown;
+				if (div.isTrainShown) 
+					el.classList.add("schedule-trainDiv_inactive");
+				else 
+					el.classList.remove("schedule-trainDiv_inactive");
+			}
+
+
 		if (div.isTrainShown) 
 			div.classList.add("schedule-trainDiv_inactive");
 		else 

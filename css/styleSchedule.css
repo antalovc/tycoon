@@ -52,9 +52,13 @@
 
 
 /*trains*/
-
 .schedule-train {
 	fill: none;
+}
+
+/*station backgroun hidden circles to help selection*/
+.schedule-station_back {
+	opacity: 0;
 }
 
 /*tschedule tooltip*/

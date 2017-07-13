@@ -240,15 +240,21 @@ TycoonSchedule.prototype.drawTrains = function() {
 		.attr("d", function(d) { return line(d.schedule); })
 
 	//add stations markers
-	var station = train.selectAll(".schedule-station")
+	var stationEnter = train.selectAll(".schedule-station, .schedule-station_back")
 		.data(function(d) { return d.schedule; })
-		.enter().append("circle")
-			.attr("class", "schedule-station")
+		.enter();
+	var station = stationEnter.append("circle")
+			.attr("class", "schedule-station_back")
 			.style("display",     function(d) { return d == null ? "none" : null; })
 			.attr("transform",    function(d) { return d !== null ? ("translate(" + me.xScale(d.id) + "," + me.yScale(me.parseTime(d.time)) + ")") : null; })
-			.attr("fill",         function(d) { return d !== null ? "#fff" : null; })
-			.attr("stroke-width", function(d) {return d !== null ? (d.status.stopped ? "3px" : "1px") : null; })
-			.attr("r", 2);
+			.attr("r", 3)
+	stationEnter.append("circle")
+		.attr("class", "schedule-station")
+		.style("display",     function(d) { return d == null ? "none" : null; })
+		.attr("transform",    function(d) { return d !== null ? ("translate(" + me.xScale(d.id) + "," + me.yScale(me.parseTime(d.time)) + ")") : null; })
+		.attr("fill",         function(d) { return d !== null ? "#fff" : null; })
+		.attr("stroke-width", function(d) {return d !== null ? (d.status.stopped ? "3px" : "1px") : null; })
+		.attr("r", 2);
 
 	//add tooltip
 	me.tooltip = d3.select("body").append("div")
@@ -269,7 +275,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 
 	//add hover events to stations, closure is needed to get train data for tooltip
 	train.each(function(dTrain) {                   // dTrain refers to the data bound to the train
-	  d3.select(this).selectAll(".schedule-station")
+	  d3.select(this).selectAll(".schedule-station, .schedule-station_back")
 		.on("mouseover", function(dStation) {       // dStation refers to the data bound to the station
 			if (this.parentNode.classList.contains("schedule-train_hidden")) return;
 			var a = dTrain;
