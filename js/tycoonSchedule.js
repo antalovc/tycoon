@@ -89,23 +89,30 @@ TycoonSchedule.prototype.prepareData = function() {
 	var me = this;
 	me.verticesSize = me.store.getVerticesSize();
 
-	//get list of unique vertices and their ids if needed
-	me.handledVertices = [],
-	me.handledVerticesIds = [];
+	//get list of used vertices and their ids if needed
+	me.handledVertices = [];      //array of handled vertices
+	me.handledVerticesIds = [];   //array of their ids
+	me.handledVerticesIdsMap = {};//object to map id to position in handledVertices
 	if (me.removeAbsentVertices) {
+		//get ids of all the used vertices (non-unique)
 		me.trains.forEach(function(d) {
 			d.schedule.forEach(function(st) {
 				me.handledVerticesIds.push(st.id);
 			})
 		});
+		//sort vertices' ids and make remove non-unique
 		me.handledVerticesIds = Utils.UniqueSort(me.handledVerticesIds);
-		me.handledVerticesIds.forEach(function(id) {
+		me.handledVerticesIds.forEach(function(id, index) {
 			me.handledVertices.push(me.vertices[id-1]);
+			me.handledVerticesIdsMap[id] = index;
 		});
 	}
 	else {
 		me.handledVertices = me.vertices;
-		me.handledVerticesIds = me.vertices;
+		me.handledVertices.forEach(function(vertice, index) {
+			me.handledVerticesIds.push(vertice.id);
+			me.handledVerticesIdsMap[vertice.id] = index;
+		});
 	}
 }
 
@@ -245,7 +252,7 @@ TycoonSchedule.prototype.drawTrains = function() {
 		.attr("class", "schedule-tooltip")
 		.style("opacity", 0);
 
-	//add hover events
+	//add hover events to train lines
 	train
 		.on("mouseover", function(d) {
 			if (me.graph) 
@@ -257,15 +264,38 @@ TycoonSchedule.prototype.drawTrains = function() {
 			if (me.graph) me.graph.drawRoute();
 		});
 
-	station
+	//add hover events to stations, closure is needed to get train data for tooltip
+	train.each(function(dTrain) {                   // dTrain refers to the data bound to the train
+	  d3.select(this).selectAll(".schedule-station")
+		.on("mouseover", function(dStation) {       // dStation refers to the data bound to the station
+			var a = dTrain;
+			if (me.graph) me.graph.drawVertice(dStation.id);
+			me.tooltip
+				.style("opacity", 1);
+			me.tooltip.html("Train: " + dTrain.id_train + "<br/>" +
+					"Station: " + me.handledVertices[me.handledVerticesIdsMap[dStation.id]].label + "<br/>" +
+					"Operation: " + dStation.status.operation + "<br/>" +
+					"Time : " + dStation.time
+				)
+				.style("left", (d3.event.pageX + 15) + "px")
+				.style("top", (d3.event.pageY - 28) + "px");
+		})
+		.on("mouseout",  function() {
+			if (me.graph) me.graph.drawVertice();
+			me.tooltip
+				.style("opacity", 0);
+		});
+	});
+
+
+	/*station
 		.on("mouseover", function(d) {
 			if (me.graph) me.graph.drawVertice(d.id);
-			me.tooltip.transition()
-				.duration(200)
+			me.tooltip
 				.style("opacity", 1);
 			me.tooltip.html("Train: " + "<br/>" +
-					"Station: " + "<br/>" +
-					"Operation: " + "<br/>" +
+					"Station: " + me.handledVertices[me.handledVerticesIdsMap[d.id]].label + "<br/>" +
+					"Operation: " + d.status.operation + "<br/>" +
 					"Time : " + d.time
 				)
 				.style("left", (d3.event.pageX + 15) + "px")
@@ -273,10 +303,9 @@ TycoonSchedule.prototype.drawTrains = function() {
 		})
 		.on("mouseout",  function() {
 			if (me.graph) me.graph.drawVertice();
-			me.tooltip.transition()
-				.duration(500)
+			me.tooltip
 				.style("opacity", 0);
-		});
+		});*/
 
 }
 

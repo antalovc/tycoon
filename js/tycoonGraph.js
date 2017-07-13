@@ -93,8 +93,10 @@ TycoonGraph.prototype.initVisuals = function() {
 
 	// Define the zoom function for the zoomable tree
 	function zoom() {
-		var duration = me.zoomDuration; //0;
-		//if (!d3.event.sourceEvent) duration = me.zoomDuration;
+		//check whether this is a mouse event or not (0 duration for immediate response then)
+		var duration = 0;
+		if (!d3.event.sourceEvent) duration = me.zoomDuration;
+
 		me.vis.transition().duration(duration).attr("transform", d3.event.transform);
 	}
 	// Define the zoomListener which calls the zoom function on the "zoom" event constrained within the scaleExtents

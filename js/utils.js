@@ -117,7 +117,10 @@ var Utils = (function () {
 			return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 		},
 
+		//sorts array and leaves only unique elements
 		UniqueSort: function (arr) {
+			// taken from here:
+			//https://stackoverflow.com/questions/4833651/javascript-array-sort-and-unique
 			if (arr.length === 0) return arr;
 			arr = arr.sort(function (a, b) {
 				return a * 1 - b * 1;
