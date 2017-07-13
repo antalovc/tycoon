@@ -255,32 +255,34 @@ TycoonSchedule.prototype.drawTrains = function() {
 	//add hover events to train lines
 	train
 		.on("mouseover", function(d) {
-			if (me.graph) 
+			if (me.graph && !this.classList.contains("schedule-train_hidden")) 
 				me.graph.drawRoute(d.schedule.map(function(station) {
 					return station.id;
 				}), false, me.colors[d.id_train]);
 		})
 		.on("mouseout",  function() {
-			if (me.graph) me.graph.drawRoute();
+			if (me.graph && !this.classList.contains("schedule-train_hidden")) me.graph.drawRoute();
 		});
 
 	//add hover events to stations, closure is needed to get train data for tooltip
 	train.each(function(dTrain) {                   // dTrain refers to the data bound to the train
 	  d3.select(this).selectAll(".schedule-station")
 		.on("mouseover", function(dStation) {       // dStation refers to the data bound to the station
+			if (this.parentNode.classList.contains("schedule-train_hidden")) return;
 			var a = dTrain;
 			if (me.graph) me.graph.drawVertice(dStation.id);
 			me.tooltip
 				.style("opacity", 1);
-			me.tooltip.html("Train: " + dTrain.id_train + "<br/>" +
-					"Station: " + me.handledVertices[me.handledVerticesIdsMap[dStation.id]].label + "<br/>" +
-					"Operation: " + dStation.status.operation + "<br/>" +
-					"Time : " + dStation.time
+			me.tooltip.html("Поезд: " + dTrain.id_train + "<br/>" +
+					"Станция: " + me.handledVertices[me.handledVerticesIdsMap[dStation.id]].label + "<br/>" +
+					"Операция: " + dStation.status.operation + "<br/>" +
+					"Время : " + dStation.time
 				)
 				.style("left", (d3.event.pageX + 15) + "px")
 				.style("top", (d3.event.pageY - 28) + "px");
 		})
 		.on("mouseout",  function() {
+			if (this.parentNode.classList.contains("schedule-train_hidden")) return;
 			if (me.graph) me.graph.drawVertice();
 			me.tooltip
 				.style("opacity", 0);
@@ -316,7 +318,7 @@ TycoonSchedule.prototype.getTrainColorByID = function (id_train) {
 TycoonSchedule.prototype.showTrain = function (id_train, show) {
 	if (typeof show === "undefined") show = true;
 
-	d3.select("#" + this.idPrefixer + id_train).style("opacity", show ? 1 : 0);
+	d3.select("#" + this.idPrefixer + id_train).classed("schedule-train_hidden", !show);
 }
 
 TycoonSchedule.prototype.filterOperations = function (operationsArray) {

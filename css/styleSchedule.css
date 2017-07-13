@@ -18,7 +18,6 @@
 
 
 /*stations axis*/
-
 .schedule-stations text {
 	font-family: sans-serif;
 	font-size: 10px;
@@ -43,7 +42,6 @@
 
 
 /*time axes*/
-
 .axis path {
 	display: none;
 }
@@ -65,17 +63,17 @@
 	position: absolute;
 	max-width: 300px;
 	padding: 4px;
-	font: 12px sans-serif;
 	background: #5c6bc0;
 	color: white;
 	border: 0px;
 	border-radius: 8px;
 	pointer-events: none;
+
+	font: 16px sans-serif;
 }
 
 
 /*menu show/hidebuttons*/
-
 .schedule-menuButton {
 	position: absolute;
 	display: block;
@@ -112,9 +110,12 @@
 	/*right-arrow symbol*/
 }
 
+/**/
+.schedule-train_hidden {
+	opacity: 0;
+}
 
 /*menu*/
-
 .schedule-menu {
 	position: absolute;
 	bottom: 0px;
@@ -136,7 +137,6 @@
 
 
 /*style to show menu and its animations*/
-
 .schedule-menu_shown {
 	display: -webkit-box;
 	display: -ms-flexbox;

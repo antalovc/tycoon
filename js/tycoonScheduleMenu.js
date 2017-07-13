@@ -44,7 +44,7 @@ TycoonScheduleMenu.prototype.draw = function() {
 		menu.classList.remove("schedule-menu_shown");
 	});
 
-	me.drawOperationsList();
+	//me.drawOperationsList();
 	me.drawTrainsList();
 }
 
