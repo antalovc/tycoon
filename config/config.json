@@ -19,6 +19,7 @@
 	"margin"               : {"top": 50, "right": 50, "bottom": 50, "left": 50},
 	"selRouteColor"        : "cornflowerblue",
 	"selStationColor"      : "red",
+	"selStationBorderColor": "blue",
 	"selStationRadius"     : 9,
 	"selStationWidth"      : 6
 }

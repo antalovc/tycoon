@@ -395,16 +395,22 @@ TycoonGraph.prototype.drawVertice = function(verticeId) {
 		.data(curVertice);
 		//.filter(function(d) { return (d.id === verticeId) ? d : null; });
 
-	vertice.enter()
+	var marker = vertice.enter()
 		.append("svg:g")
 			.attr("class", className)
-			.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSize.maxY - d.y)*scale + ")"; })
-		.append("circle")
-			.attr("cx", 0)
-			.attr("cy", 0)
-			.attr("stroke", me.selStationColor)
-			.attr("stroke-width",  me.selStationWidth)
-			.attr("r", me.selStationRadius);
+			.attr("transform", function(d) {return "translate(" + d.x*scale + "," + (verticesSize.maxY - d.y)*scale + ")"; });
+	marker.append("circle")
+		.attr("cx", 0)
+		.attr("cy", 0)
+		.attr("stroke", me.selStationColor)
+		.attr("stroke-width",  me.selStationWidth)
+		.attr("r", me.selStationRadius);
+	marker.append("circle")
+		.attr("cx", 0)
+		.attr("cy", 0)
+		.attr("stroke", me.selStationBorderColor)
+		.attr("stroke-width", 1)
+		.attr("r", me.selStationRadius + me.selStationWidth/2);
 
 	vertice.exit().remove()
 }
